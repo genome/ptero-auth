@@ -1,0 +1,8 @@
+flask
+flask-restful
+-e git+https://github.com/mark-burnett/jot.git#egg=jot
+oauthlib
+pycrypto
+simplejson
+simplepam
+sqlalchemy

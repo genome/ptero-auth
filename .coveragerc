@@ -1,0 +1,8 @@
+[run]
+omit = ptero_auth/api/wsgi.py
+branch = True
+parallel = True
+source = ptero_auth
+
+[report]
+show_missing = True
