@@ -7,15 +7,18 @@ __all__ = ['Factory']
 
 
 class Factory(object):
-    def __init__(self, settings):
+    def __init__(self, settings, user_info_provider):
         self.settings = settings
+        self.user_info_provider = user_info_provider
+
         self._initialized = False
         self._engine = None
         self._Session = None
 
     def create_backend(self):
         self._initialize()
-        return backend.Backend(self._Session(), self.settings['signature_key'])
+        return backend.Backend(self._Session(), self.settings['signature_key'],
+                self.user_info_provider)
 
     def _initialize(self):
         # Lazy initialize to be pre-fork friendly.

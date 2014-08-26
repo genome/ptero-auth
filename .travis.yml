@@ -1,13 +1,22 @@
 language: python
 python: "2.7"
 
-install: pip install tox
+install: pip install tox pyyaml
+
+env:
+    matrix:
+        - TEST_POSIX_PROVIDER=1
+        - TEST_STATIC_PROVIDER=1
+
+before_script:
+    - sudo python scripts/create_users.py
 
 script: tox
 
 after_success:
     - pip install coveralls
     - coveralls
+
 branches:
     only:
         - master

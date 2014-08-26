@@ -1,0 +1,35 @@
+passwords:
+    alice: apass
+    bob: foobo
+    charlie: charles
+
+user_fields:
+    alice:
+        posix:
+            username: alice
+            uid: 20001
+            gid: 20001
+            groups: [20000, 20003]
+        roles: [pteroadmin, c]
+
+    bob:
+        posix:
+            username: bob
+            uid: 20002
+            gid: 20002
+            groups: [20001, 20002, 20003]
+        roles: [a, b, c]
+
+    charlie:
+        posix:
+            username: charlie
+            uid: 20003
+            gid: 20003
+            groups: [20001, 20003]
+        roles: [a, c]
+
+groups:
+    pteroadmin: 20000
+    a: 20001
+    b: 20002
+    c: 20003

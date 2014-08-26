@@ -4,10 +4,6 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text
 from sqlalchemy import func
 from sqlalchemy.orm import relationship
 import datetime
-import grp
-import os
-import pwd
-import simplepam
 import sqlalchemy
 
 
@@ -35,38 +31,6 @@ class User(Base):
             user = session.query(User).filter_by(name=username).one()
 
         return user
-
-    @property
-    def details(self):
-        return {
-            'name': name,
-            'uid': self.uid,
-            'gid': self.gid,
-            'groups': self.groups,
-            'roles': self.roles,
-        }
-
-    @property
-    def uid(self):
-        pw_struct = pwd.getpwnam(self.name)
-        return pw_struct.pw_uid
-
-    @property
-    def gid(self):
-        pw_struct = pwd.getpwnam(self.name)
-        return pw_struct.pw_gid
-
-    @property
-    def groups(self):
-        return [self.gid] + [g.gr_gid for g in grp.getgrall()
-                             if self.name in g.gr_mem]
-
-    @property
-    def roles(self):
-        return self.groups
-
-    def validate_password(self, password):
-        return simplepam.authenticate(self.name, password)
 
 
 class Key(Base):

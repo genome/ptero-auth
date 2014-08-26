@@ -3,9 +3,10 @@ from . import models
 
 
 class Backend(object):
-    def __init__(self, session, signature_key):
+    def __init__(self, session, signature_key, user_info_provider):
         self.session = session
         self.oidc_server = create_server(session, signature_key)
+        self.user_info_provider = user_info_provider
 
     def cleanup(self):
         pass
@@ -16,7 +17,8 @@ class Backend(object):
 
         user = models.User.create_or_get(self.session, authorization.username)
 
-        if user.validate_password(authorization.password):
+        if self.user_info_provider.validate_password(user,
+                authorization.password):
             return user
 
     def create_api_key_for_user(self, user):
