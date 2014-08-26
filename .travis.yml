@@ -9,7 +9,7 @@ env:
         - TEST_STATIC_PROVIDER=1
 
 before_script:
-    - sudo python tests/scripts/create_users.py
+    - 'sudo $(which python) tests/scripts/create_users.py'
 
 script: tox
 
