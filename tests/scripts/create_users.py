@@ -25,7 +25,7 @@ def main(filename):
         password = user_data['passwords'][user_identifier]
         _create_user(password=password, **posix)
 
-        _verify_user(user_info['username'])
+        _verify_user(posix['username'])
 
 
 def _get_user_data(filename):
