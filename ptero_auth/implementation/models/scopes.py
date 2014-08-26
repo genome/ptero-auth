@@ -1,5 +1,4 @@
-from ..base import Base
-from ..util import generate_id
+from .base import Base
 from sqlalchemy import Column, ForeignKey, Integer, Text
 from sqlalchemy import Table, PrimaryKeyConstraint
 from sqlalchemy.orm import relationship

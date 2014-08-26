@@ -1,5 +1,5 @@
-from ..base import Base
-from ..util import generate_id
+from .base import Base
+from .util import generate_id
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text
 from sqlalchemy.orm import column_property, relationship
 import datetime
