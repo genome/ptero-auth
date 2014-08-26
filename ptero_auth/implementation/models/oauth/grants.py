@@ -22,7 +22,7 @@ class Grant(Base):
     grant_type = Column(Text, index=True, nullable=False)
 
     created_at = Column(DateTime(timezone=True), index=True, nullable=False,
-            default=datetime.datetime.utcnow())
+            default=datetime.datetime.utcnow)
 
     client_pk = Column(Integer, ForeignKey('client.client_pk'), nullable=False)
     user_pk = Column(Integer, ForeignKey('user.user_pk'), nullable=False)

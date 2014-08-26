@@ -23,7 +23,7 @@ class Client(Base):
 
     active = Column(Boolean, index=True, default=True)
     created_at = Column(DateTime(timezone=True), index=True, nullable=False,
-            default=datetime.datetime.utcnow())
+            default=datetime.datetime.utcnow)
     deactivated_at = Column(DateTime(timezone=True), index=True)
 
     redirect_uri_regex = Column(Text, nullable=False)

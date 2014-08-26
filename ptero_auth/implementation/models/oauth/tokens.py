@@ -19,9 +19,10 @@ class RefreshToken(Base):
     refresh_token_pk = Column(Integer, primary_key=True)
 
     created_at = Column(DateTime(timezone=True), index=True, nullable=False,
-            default=datetime.datetime.utcnow())
+            default=datetime.datetime.utcnow)
     expires_at = Column(DateTime(timezone=True), index=True, nullable=False,
-            default=datetime.datetime.utcnow() + datetime.timedelta(days=30))
+            default=lambda: datetime.datetime.utcnow()
+                + datetime.timedelta(days=30))
 
     active = Column(Boolean, nullable=False, default=False)
     deactivated_at = Column(DateTime(timezone=True), index=True)
@@ -42,9 +43,10 @@ class AccessToken(Base):
             default=lambda: generate_id('at'))
 
     created_at = Column(DateTime(timezone=True), index=True, nullable=False,
-            default=datetime.datetime.utcnow())
+            default=datetime.datetime.utcnow)
     expires_at = Column(DateTime(timezone=True), index=True, nullable=False,
-            default=datetime.datetime.utcnow() + datetime.timedelta(minutes=10))
+            default=lambda: datetime.datetime.utcnow()
+                + datetime.timedelta(minutes=10))
 
     active = Column(Boolean, nullable=False, default=False)
     deactivated_at = Column(DateTime(timezone=True), index=True)

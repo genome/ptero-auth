@@ -73,7 +73,7 @@ class Key(Base):
     active = Column(Boolean, default=True)
     deactivated_at = Column(DateTime(timezone=True), index=True)
     created_at = Column(DateTime(timezone=True), index=True, nullable=False,
-            default=datetime.datetime.utcnow())
+            default=datetime.datetime.utcnow)
 
     usage_count = Column(Integer, index=True, default=0)
     last_used = Column(DateTime(timezone=True), index=True)
