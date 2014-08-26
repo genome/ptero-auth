@@ -39,7 +39,8 @@ def _create_group(name, gid):
 def _create_user(username, password, uid, gid, groups):
     print 'creating user:', username, password, uid, gid, groups
     subprocess.check_call(
-            ['useradd', '-u', uid, '-g', gid, '-G', ','.join(groups), username])
+            ['useradd', '-u', str(uid), '-g', str(gid),
+                '-G', ','.join(groups), username])
     subprocess.check_call(['passwd', username],
             stdin=StringIO('%s\n%s\n' % (password, password)))
 
