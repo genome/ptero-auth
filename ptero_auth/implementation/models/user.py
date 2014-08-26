@@ -21,6 +21,7 @@ class User(Base):
     name = Column(Text, index=True, nullable=False, unique=True)
     oidc_sub = Column(Text, nullable=False, unique=True,
             default=lambda: generate_id('sub'))
+    banned = Column(Boolean, index=True, nullable=False, default=False)
 
     @classmethod
     def create_or_get(cls, session, username):
@@ -42,6 +43,7 @@ class User(Base):
             'uid': self.uid,
             'gid': self.gid,
             'groups': self.groups,
+            'roles': self.roles,
         }
 
     @property
@@ -56,7 +58,12 @@ class User(Base):
 
     @property
     def groups(self):
-        return [g.gr_name for g in grp.getgrall() if self.name in g.gr_mem]
+        return [self.gid] + [g.gr_gid for g in grp.getgrall()
+                             if self.name in g.gr_mem]
+
+    @property
+    def roles(self):
+        return self.groups
 
     def validate_password(self, password):
         return simplepam.authenticate(self.name, password)
