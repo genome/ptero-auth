@@ -35,7 +35,8 @@ class Client(Base):
 
     redirect_uri_regex = Column(Text, nullable=False)
 
-    valid_scopes = Column(Text, nullable=False)
+    allowed_scopes = relationship('Scope', secondary='allowed_scope_bridge')
+    default_scopes = relationship('Scope', secondary='default_scope_bridge')
 
     def authenticate(self, client_id, client_secret=None):
         return NotImplemented
@@ -44,11 +45,15 @@ class Client(Base):
         return re.match(self.redirect_uri_regex, redirect_uri)
 
     def is_valid_scope_set(self, scope_set):
-        return scope_set.issubset(self.valid_scope_set)
+        return scope_set.issubset(self.allowed_scope_set)
 
     @property
-    def valid_scope_set(self):
-        return set(self.valid_scopes.split(' '))
+    def allowed_scope_set(self):
+        return set(s.value for s in self.allowed_scopes)
+
+    @property
+    def default_scope_set(self):
+        return set(s.value for s in self.default_scopes)
 
 
 class ConfidentialClient(Client):

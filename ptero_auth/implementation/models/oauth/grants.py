@@ -30,6 +30,8 @@ class Grant(Base):
     client = relationship('Client')
     user = relationship('User')
 
+    scopes = relationship('Scope', secondary='grant_scope_bridge')
+
     @property
     def active(self):
         return NotImplemented
