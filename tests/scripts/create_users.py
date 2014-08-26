@@ -1,7 +1,6 @@
 # NOTE: This script will must be run as root.  It runs shell commands to create
 # posix users and groups for testing purposes.
 
-from StringIO import StringIO
 import argparse
 import subprocess
 import yaml
@@ -41,8 +40,8 @@ def _create_user(username, password, uid, gid, groups):
     subprocess.check_call(
             ['useradd', '-u', str(uid), '-g', str(gid),
                 '-G', ','.join(str(g) for g in groups), username])
-    subprocess.check_call(['passwd', username],
-            stdin=StringIO('%s\n%s\n' % (password, password)))
+    p = subprocess.POpen(['passwd', username], stdin=subprocess.PIPE)
+    stdout, stderr = p.communicate('%s\n%s\n' % (password, password))
 
 
 if __name__ == '__main__':
