@@ -19,7 +19,7 @@ def _get_posix(user):
 
 
 def _get_roles(user):
-    return [g.gr_nam for g in _get_group_structs_for(user)]
+    return [g.gr_name for g in _get_group_structs_for(user)]
 
 
 _FIELD_CONSTRUCTORS = {
