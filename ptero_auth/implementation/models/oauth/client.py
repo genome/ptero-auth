@@ -17,7 +17,7 @@ class Client(Base):
 
     client_pk = Column(Integer, primary_key=True)
     client_id = Column(Text, index=True, unique=True, nullable=False,
-            default=lambda: double_uuid_generator() + ':ci')
+            default=lambda: generate_id('ci'))
     client_name = Column(Text, index=True)
     client_type = Column(Text, index=True, nullable=False)
 
@@ -49,8 +49,7 @@ class ConfidentialClient(Client):
         'polymorphic_identity': 'confidential',
     }
 
-    client_secret = Column(Text,
-            default=lambda: double_uuid_generator() + ':cs')
+    client_secret = Column(Text, default=lambda: generate_id('cs'))
 
     def authenticate(self, client_id, client_secret=None):
         return (self.active
