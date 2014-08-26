@@ -40,7 +40,7 @@ def _create_user(username, password, uid, gid, groups):
     subprocess.check_call(
             ['useradd', '-u', str(uid), '-g', str(gid),
                 '-G', ','.join(str(g) for g in groups), username])
-    p = subprocess.POpen(['passwd', username], stdin=subprocess.PIPE)
+    p = subprocess.Popen(['passwd', username], stdin=subprocess.PIPE)
     stdout, stderr = p.communicate('%s\n%s\n' % (password, password))
 
 
