@@ -1,6 +1,6 @@
 from ..base import Base
 from ..util import generate_id
-from sqlalchemy import Boolean, Column, DateTime, Integer, Text
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text
 from sqlalchemy.orm import relationship
 import datetime
 import re
@@ -22,9 +22,16 @@ class Client(Base):
     client_type = Column(Text, index=True, nullable=False)
 
     active = Column(Boolean, index=True, default=True)
+
     created_at = Column(DateTime(timezone=True), index=True, nullable=False,
             default=datetime.datetime.utcnow)
+    created_by_pk = Column(Integer, ForeignKey('user.user_pk'), nullable=False)
+    created_by = relationship('User', foreign_keys=[created_by_pk])
+
     deactivated_at = Column(DateTime(timezone=True), index=True)
+    deactivated_by_pk = Column(Integer, ForeignKey('user.user_pk'),
+            nullable=False)
+    deactivated_by = relationship('User', foreign_keys=[deactivated_by_pk])
 
     redirect_uri_regex = Column(Text, nullable=False)
 
