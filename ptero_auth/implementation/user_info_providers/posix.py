@@ -41,7 +41,7 @@ class PosixUserInfoProvider(BaseUserInfoProvider):
         return result
 
     def validate_password(self, user, password):
-        p = subproces.Popen(['su', '-c', 'exit', username],
+        p = subprocess.Popen(['su', '-c', 'exit', username],
                 stdin=subprocess.PIPE)
         p.communicate('%s\n' % password)
         return p.returncode == 0
