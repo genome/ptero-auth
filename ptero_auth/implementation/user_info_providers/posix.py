@@ -44,6 +44,8 @@ class PosixUserInfoProvider(BaseUserInfoProvider):
         return check_login(user.name, password)
 
 
+# This function is taken from StackOverflow:
+# http://stackoverflow.com/questions/5286321/pam-authentication-in-python-without-root-privileges
 def check_login(username, password):
     try:
         child = pexpect.spawn('/bin/su - %s'%(username))
