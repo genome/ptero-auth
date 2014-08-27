@@ -1,5 +1,6 @@
 from .base import Base
 from .util import generate_id
+from hmac import compare_digest
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text
 from sqlalchemy.orm import relationship
 import datetime
@@ -67,9 +68,12 @@ class ConfidentialClient(Client):
     client_secret = Column(Text, default=lambda: generate_id('cs'))
 
     def authenticate(self, client_id, client_secret=None):
-        return (self.active
-                and self.client_id == client_id
-                and self.client_secret == client_secret)
+        if not isinstance(client_secret, str) or not isinstance(client_id, str):
+            return False
+        else:
+            return (self.active
+                    and compare_digest(self.client_id, client_id)
+                    and compare_digest(self.client_secret, client_secret))
 
     _VALID_GRANT_TYPES = set([
         'authorization_code',
