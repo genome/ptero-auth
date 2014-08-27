@@ -134,6 +134,22 @@ class PatchApiKey(BaseFlaskTest):
         self.assertEqual(data['api-key'], self.bob_key)
         self.assertEqual(data['active'], False)
 
+
+    def test_should_persist_modified_data(self):
+        patch_response = self.client.patch('/v1/api-keys/%s' % self.bob_key,
+            json.dumps({'active': False}),
+            headers={
+                'Authorization': self.basic_auth_header('bob', 'foobob'),
+        })
+
+        get_response = self.client.get('/v1/api-keys/%s' % self.bob_key,
+            headers={
+                'Authorization': self.basic_auth_header('bob', 'foobob'),
+        })
+        data = json.loads(get_response.data)
+        self.assertEqual(data['api-key'], self.bob_key)
+        self.assertEqual(data['active'], False)
+
     def test_should_return_401_with_invalid_credentials(self):
         response = self.client.patch('/v1/api-keys/%s' % self.bob_key,
             json.dumps({'active': False}),
