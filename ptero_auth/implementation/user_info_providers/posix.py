@@ -4,6 +4,7 @@ import grp
 import logging
 import pexpect
 import pwd
+import re
 
 
 LOG = logging.getLogger(__name__)
