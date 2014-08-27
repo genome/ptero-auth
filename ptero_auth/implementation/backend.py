@@ -27,3 +27,6 @@ class Backend(object):
         self.session.commit()
 
         return key
+
+    def get_api_key(self, api_key):
+        return self.session.query(models.Key).filter_by(key=api_key).first()

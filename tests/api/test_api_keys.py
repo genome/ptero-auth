@@ -82,3 +82,10 @@ class GetApiKey(BaseFlaskTest):
         })
 
         self.assertEqual(response.status_code, 401)
+
+    def test_should_return_404_if_key_does_not_exist(self):
+        response = self.client.get('/v1/api-keys/nonsense', headers={
+            'Authorization': self.basic_auth_header('charlie', 'charles'),
+        })
+
+        self.assertEqual(response.status_code, 404)

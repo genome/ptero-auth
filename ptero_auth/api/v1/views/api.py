@@ -28,5 +28,9 @@ class ApiKeyView(Resource):
         if not user:
             return common.require_authorization()
 
+        key = g.backend.get_api_key(api_key)
+        if not key:
+            return None, 404
+
     def patch(self, api_key):
         pass
