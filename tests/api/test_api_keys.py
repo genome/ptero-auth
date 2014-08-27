@@ -19,6 +19,13 @@ class PostApiKey(BaseFlaskTest):
 
         self.assertEqual(response.status_code, 401)
 
+    def test_should_set_www_authenticate_header_with_invalid_password(self):
+        response = self.client.post('/v1/api-keys', headers={
+            'Authorization': self.basic_auth_header('alice', 'badpass'),
+        })
+
+        self.assertEqual(response.headers['WWW-Authenticate'], 'API-Key')
+
     def test_should_return_201(self):
         response = self.client.post('/v1/api-keys', headers={
             'Authorization': self.basic_auth_header('alice', 'apass'),

@@ -1,2 +1,2 @@
 def require_authorization():
-    return '', 401, {'WWW-Authenticate': 'Basic'}
+    return '', 401, {'WWW-Authenticate': 'API-Key'}
