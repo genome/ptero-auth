@@ -4,5 +4,4 @@ flask-restful
 oauthlib
 pycrypto
 simplejson
-simplepam
 sqlalchemy

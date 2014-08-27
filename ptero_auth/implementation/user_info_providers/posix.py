@@ -2,7 +2,7 @@ from .base import BaseUserInfoProvider
 from ptero_auth import exceptions
 import grp
 import pwd
-import simplepam
+import subprocess
 
 
 def _get_posix(user):
@@ -41,7 +41,10 @@ class PosixUserInfoProvider(BaseUserInfoProvider):
         return result
 
     def validate_password(self, user, password):
-        return simplepam.authenticate(user.name, password)
+        p = subproces.Popen(['su', '-c', 'exit', username],
+                stdin=subprocess.PIPE)
+        p.communicate('%s\n' % password)
+        return p.returncode == 0
 
 
 def _get_group_structs_for(user):
