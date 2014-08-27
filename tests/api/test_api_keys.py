@@ -4,7 +4,7 @@ import re
 import unittest
 
 
-class PostApiKey(BaseFlaskTest):
+class PostApiKeyList(BaseFlaskTest):
     def test_should_return_401_with_invalid_user(self):
         response = self.client.post('/v1/api-keys', headers={
             'Authorization': self.basic_auth_header('baduser', 'badpass'),
