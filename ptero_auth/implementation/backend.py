@@ -31,3 +31,8 @@ class Backend(object):
     def get_api_key_for_user(self, user, api_key):
         return self.session.query(models.Key
                 ).filter_by(key=api_key, user=user).first()
+
+    def deactivate_api_key(self, key):
+        key.active = False
+        self.session.add(key)
+        self.session.commit()

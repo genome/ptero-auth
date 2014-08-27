@@ -123,6 +123,17 @@ class PatchApiKey(BaseFlaskTest):
 
         self.assertEqual(response.status_code, 200)
 
+    def test_should_return_updated_api_key_data(self):
+        response = self.client.patch('/v1/api-keys/%s' % self.bob_key,
+            json.dumps({'active': False}),
+            headers={
+                'Authorization': self.basic_auth_header('bob', 'foobob'),
+        })
+
+        data = json.loads(response.data)
+        self.assertEqual(data['api-key'], self.bob_key)
+        self.assertEqual(data['active'], False)
+
     def test_should_return_401_with_invalid_credentials(self):
         response = self.client.patch('/v1/api-keys/%s' % self.bob_key,
             json.dumps({'active': False}),

@@ -42,3 +42,7 @@ class ApiKeyView(Resource):
         key = g.backend.get_api_key_for_user(user, api_key)
         if not key:
             return None, 404
+
+        g.backend.deactivate_api_key(key)
+
+        return key.as_dict
