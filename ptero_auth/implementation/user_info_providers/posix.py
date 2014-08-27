@@ -49,7 +49,7 @@ class PosixUserInfoProvider(BaseUserInfoProvider):
         return check_login(user.name, password)
 
 
-# This function is taken from StackOverflow:
+# This function is inspired by a StackOverflow answer:
 # http://stackoverflow.com/questions/5286321/pam-authentication-in-python-without-root-privileges
 def check_login(username, password):
     if not _is_valid_username(username):
@@ -57,10 +57,8 @@ def check_login(username, password):
         return False
 
     try:
-        child = pexpect.spawn('/bin/su - %s' % username)
-        child.expect('Password:')
+        child = pexpect.spawn('su', ['-c', 'exit', username])
         child.sendline(password)
-        result = child.expect(['su: Authentication failure', username])
         child.close()
 
     except Exception:
@@ -68,13 +66,7 @@ def check_login(username, password):
         LOG.exception("Error authenticating.")
         return False
 
-    if result == 0:
-        LOG.debug("Authentication failed for user %s.", username)
-        return False
-
-    else:
-        LOG.debug("Authentication succeeded for user %s.", username)
-        return True
+    return child.exitstatus == 0
 
 
 _VALID_USERNAME_REGEX = re.compile(r'^\w+$')
