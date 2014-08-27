@@ -59,7 +59,7 @@ def check_login(username, password):
         child = pexpect.spawn('/bin/su - %s' % username)
         child.expect('Password:')
         child.sendline(password)
-        result=child.expect(['su: Authentication failure', username])
+        result = child.expect(['su: Authentication failure', username])
         child.close()
 
     except Exception:
