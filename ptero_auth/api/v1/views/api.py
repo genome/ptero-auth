@@ -24,7 +24,9 @@ class ApiKeyListView(Resource):
 
 class ApiKeyView(Resource):
     def get(self, api_key):
-        pass
+        user = g.backend.get_user_from_authorization(request.authorization)
+        if not user:
+            return common.require_authorization()
 
     def patch(self, api_key):
         pass

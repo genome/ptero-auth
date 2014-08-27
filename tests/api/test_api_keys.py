@@ -75,3 +75,10 @@ class GetApiKey(BaseFlaskTest):
         })
 
         self.assertEqual(response.status_code, 200)
+
+    def test_should_return_401_with_invalid_credentials(self):
+        response = self.client.get('/v1/api-keys/%s' % self.bob_key, headers={
+            'Authorization': self.basic_auth_header('baduser', 'badpass'),
+        })
+
+        self.assertEqual(response.status_code, 401)
