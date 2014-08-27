@@ -66,15 +66,15 @@ def check_login(username, password):
     except Exception:
         if child:
             child.close()
-        LOG.exception('Error authenticating: %s', child)
+        LOG.exception('Error authenticating username %s.', username)
         return False
 
     if child.exitstatus == 0:
-        LOG.debug('Authentication succeeded for user %s: %s', username, child)
+        LOG.debug('Authentication succeeded for user %s.', username)
         return True
 
     else:
-        LOG.debug('Authentication failed for user %s.: %s', username, child)
+        LOG.debug('Authentication failed for user %s.', username)
         return False
 
 
