@@ -1,6 +1,6 @@
 from Crypto.PublicKey import RSA
 from ptero_auth.api.application import create_app
-from . import util
+from .. import util
 import os
 import requests.auth
 import unittest
