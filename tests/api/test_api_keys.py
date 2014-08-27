@@ -60,3 +60,18 @@ class PostApiKeyList(BaseFlaskTest):
             'Authorization': self.basic_auth_header('alice', 'apass'),
         })
         self.assertEqual(get_response.status_code, 200)
+
+
+class GetApiKey(BaseFlaskTest):
+    def setUp(self):
+        super(GetApiKey, self).setUp()
+        self.alice_key = self.create_api_key('alice', 'apass')
+        self.bob_key = self.create_api_key('bob', 'foobob')
+        self.charlie_key = self.create_api_key('charlie', 'charles')
+
+    def test_should_return_200_with_owner_credentials(self):
+        response = self.client.get('/v1/api-keys/%s' % self.bob_key, headers={
+            'Authorization': self.basic_auth_header('bob', 'foobob'),
+        })
+
+        self.assertEqual(response.status_code, 200)
