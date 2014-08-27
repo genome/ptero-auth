@@ -105,3 +105,20 @@ class GetApiKey(BaseFlaskTest):
         })
 
         self.assertEqual(response.status_code, 404)
+
+
+class PatchApiKey(BaseFlaskTest):
+    def setUp(self):
+        super(PatchApiKey, self).setUp()
+        self.alice_key = self.create_api_key('alice', 'apass')
+        self.bob_key = self.create_api_key('bob', 'foobob')
+        self.charlie_key = self.create_api_key('charlie', 'charles')
+
+    def test_should_return_200_with_owner_credentials(self):
+        response = self.client.patch('/v1/api-keys/%s' % self.bob_key,
+            json.dumps({'active': False}),
+            headers={
+                'Authorization': self.basic_auth_header('bob', 'foobob'),
+        })
+
+        self.assertEqual(response.status_code, 200)
