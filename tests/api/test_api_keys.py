@@ -48,10 +48,15 @@ class PostApiKey(BaseFlaskTest):
             response.headers['Location']))
 
     def test_should_return_valid_api_key(self):
-        response = self.client.post('/v1/api-keys', headers={
+        post_response = self.client.post('/v1/api-keys', headers={
             'Authorization': self.basic_auth_header('alice', 'apass'),
         })
-        data = json.loads(response.data)
+        data = json.loads(post_response.data)
         self.assertIn('api-key', data)
-        self.assertTrue(re.search(r'\w+:k', data['api-key']))
-#        self.fail('need to query server to see if api key is valid')
+        api_key = data['api-key']
+        self.assertTrue(re.search(r'\w+:k', api_key))
+
+        get_response = self.client.get('/v1/api-keys/%s' % api_key, headers={
+            'Authorization': self.basic_auth_header('alice', 'apass'),
+        })
+        self.assertEqual(get_response.status_code, 200)
