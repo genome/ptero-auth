@@ -65,7 +65,7 @@ def check_login(username, password):
 
     except Exception:
         child.close()
-        log.exception("Error authenticating.")
+        LOG.exception("Error authenticating.")
         return False
 
     if result == 0:
