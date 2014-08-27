@@ -131,3 +131,21 @@ class PatchApiKey(BaseFlaskTest):
         })
 
         self.assertEqual(response.status_code, 401)
+
+    def test_should_return_404_if_key_does_not_exist(self):
+        response = self.client.patch('/v1/api-keys/nonsense',
+            json.dumps({'active': False}),
+            headers={
+                'Authorization': self.basic_auth_header('charlie', 'charles'),
+        })
+
+        self.assertEqual(response.status_code, 404)
+
+    def test_should_return_404_with_other_credentials(self):
+        response = self.client.patch('/v1/api-keys/%s' % self.bob_key,
+            json.dumps({'active': False}),
+            headers={
+                'Authorization': self.basic_auth_header('charlie', 'charles'),
+        })
+
+        self.assertEqual(response.status_code, 404)

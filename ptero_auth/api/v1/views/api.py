@@ -28,11 +28,8 @@ class ApiKeyView(Resource):
         if not user:
             return common.require_authorization()
 
-        key = g.backend.get_api_key(api_key)
+        key = g.backend.get_api_key_for_user(user, api_key)
         if not key:
-            return None, 404
-
-        if key.user != user:
             return None, 404
 
         return key.as_dict
@@ -41,3 +38,7 @@ class ApiKeyView(Resource):
         user = g.backend.get_user_from_authorization(request.authorization)
         if not user:
             return common.require_authorization()
+
+        key = g.backend.get_api_key_for_user(user, api_key)
+        if not key:
+            return None, 404

@@ -28,5 +28,6 @@ class Backend(object):
 
         return key
 
-    def get_api_key(self, api_key):
-        return self.session.query(models.Key).filter_by(key=api_key).first()
+    def get_api_key_for_user(self, user, api_key):
+        return self.session.query(models.Key
+                ).filter_by(key=api_key, user=user).first()
