@@ -38,6 +38,9 @@ class Client(Base):
     allowed_scopes = relationship('Scope', secondary='allowed_scope_bridge')
     default_scopes = relationship('Scope', secondary='default_scope_bridge')
 
+    audience_for = relationship('Scope', secondary='scope_audience_bridge',
+            backref='audience')
+
     def authenticate(self, client_id, client_secret=None):
         return NotImplemented
 

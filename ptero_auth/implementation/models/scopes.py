@@ -13,9 +13,6 @@ class Scope(Base):
     scope_pk = Column(Integer, primary_key=True)
     value = Column(Text, index=True, unique=True, nullable=False)
 
-    audience = relationship('Client', secondary='scope_audience_bridge',
-            backref='audience_for')
-
 
 allowed_scope_table = Table('allowed_scope_bridge', Base.metadata,
     Column('client_pk', Integer, ForeignKey('client.client_pk')),
