@@ -5,8 +5,12 @@ import unittest
 
 
 class PostApiKey(BaseFlaskTest):
-#    def test_post_api_keys_should_fail_with_invalid_password(self):
-#        pass
+    def test_should_return_401_with_invalid_password(self):
+        response = self.client.post('/v1/api-keys', headers={
+            'Authorization': self.basic_auth_header('alice', 'badpass'),
+        })
+
+        self.assertEqual(response.status_code, 401)
 
     def test_should_return_201(self):
         response = self.client.post('/v1/api-keys', headers={
