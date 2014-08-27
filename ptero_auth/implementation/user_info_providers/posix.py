@@ -63,10 +63,16 @@ def check_login(username, password):
 
     except Exception:
         child.close()
-        LOG.exception("Error authenticating.")
+        LOG.exception('Error authenticating: %s', child)
         return False
 
-    return child.exitstatus == 0
+    if child.exitstatus == 0:
+        LOG.debug('Authentication succeeded for user %s: %s', username, child)
+        return True
+
+    else:
+        LOG.debug('Authentication failed for user %s.: %s', username, child)
+        return False
 
 
 _VALID_USERNAME_REGEX = re.compile(r'^\w+$')
