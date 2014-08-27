@@ -35,5 +35,7 @@ class ApiKeyView(Resource):
         if key.user != user:
             return None, 404
 
+        return key.as_dict
+
     def patch(self, api_key):
         pass
