@@ -1,8 +1,12 @@
 from .base import BaseUserInfoProvider
 from ptero_auth import exceptions
 import grp
+import logging
 import pexpect
 import pwd
+
+
+LOG = logging.getLogger(__name__)
 
 
 def _get_posix(user):
@@ -47,22 +51,34 @@ class PosixUserInfoProvider(BaseUserInfoProvider):
 # This function is taken from StackOverflow:
 # http://stackoverflow.com/questions/5286321/pam-authentication-in-python-without-root-privileges
 def check_login(username, password):
+    if not _is_valid_username(username):
+        LOG.debug('Invalid user name (%s) given to check_login.', username)
+        return False
+
     try:
-        child = pexpect.spawn('/bin/su - %s'%(username))
+        child = pexpect.spawn('/bin/su - %s' % username)
         child.expect('Password:')
         child.sendline(password)
-        result=child.expect(['su: Authentication failure',username])
+        result=child.expect(['su: Authentication failure', username])
         child.close()
-    except Exception as err:
+
+    except Exception:
         child.close()
-        print ("Error authenticating. Reason: "%(err))
+        log.exception("Error authenticating.")
         return False
+
     if result == 0:
-        print ("Authentication failed for user %s."%(username))
+        LOG.debug("Authentication failed for user %s.", username)
         return False
+
     else:
-        print ("Authentication succeeded for user %s."%(username))
+        LOG.debug("Authentication succeeded for user %s.", username)
         return True
+
+
+_VALID_USERNAME_REGEX = re.compile(r'^\w+$')
+def _is_valid_username(username):
+    return _VALID_USERNAME_REGEX.match(username)
 
 
 def _get_group_structs_for(user):
