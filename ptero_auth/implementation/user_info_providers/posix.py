@@ -57,12 +57,15 @@ def check_login(username, password):
         return False
 
     try:
-        child = pexpect.spawn('su', ['-c', 'exit', username])
+        child = pexpect.spawn('su', ['-c', 'exit', username], timeout=5)
+        child.expect('Password:')
         child.sendline(password)
+        child.expect(pexpect.EOF)
         child.close()
 
     except Exception:
-        child.close()
+        if child:
+            child.close()
         LOG.exception('Error authenticating: %s', child)
         return False
 
