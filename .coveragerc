@@ -1,5 +1,5 @@
 [run]
-omit = ptero_auth/api/wsgi.py
+omit = ptero_auth/api/wsgi.py,ptero_auth/implementation/user_info_providers/static.py
 branch = True
 parallel = True
 source = ptero_auth
