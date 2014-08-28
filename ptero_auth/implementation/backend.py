@@ -3,10 +3,11 @@ from . import models
 
 
 class Backend(object):
-    def __init__(self, session, signature_key, user_info_provider):
+    def __init__(self, session, signature_key, user_info_provider, admin_role):
         self.session = session
         self.oidc_server = create_server(session, signature_key)
         self.user_info_provider = user_info_provider
+        self.admin_role = admin_role
 
     def cleanup(self):
         pass
@@ -27,3 +28,8 @@ class Backend(object):
         self.session.commit()
 
         return key
+
+    def is_user_admin(self, user):
+        user_info = self.user_info_provider.get_user_data(user, ['roles'])
+
+        return self.admin_role in user_info['roles']

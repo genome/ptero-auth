@@ -17,6 +17,9 @@ class ClientListView(Resource):
         if not user:
             return common.require_authorization()
 
+        if not g.backend.is_user_admin(user):
+            return None, 403
+
         return None, 201
 
 

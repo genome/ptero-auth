@@ -38,3 +38,12 @@ class PostClientsList(BaseFlaskTest):
                 })
 
         self.assertEqual(response.status_code, 401)
+
+    def test_should_return_403_for_non_admin_user(self):
+        response = self.client.post('/v1/clients',
+                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
+                headers={
+                    'Authorization': self.basic_auth_header('bob', 'foobob'),
+                })
+
+        self.assertEqual(response.status_code, 403)
