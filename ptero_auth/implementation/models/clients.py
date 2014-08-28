@@ -68,6 +68,9 @@ class Client(Base):
             'created_at': time.mktime(self.created_at.utctimetuple()),
             'created_by': self.created_by.name,
             'redirect_uri_regex': self.redirect_uri_regex,
+            'allowed_scopes': [s.value for s in self.allowed_scopes],
+            'default_scopes': [s.value for s in self.default_scopes],
+            'audience_for': [s.value for s in self.audience_for],
         }
 
 

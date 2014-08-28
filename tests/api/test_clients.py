@@ -14,6 +14,9 @@ class PostClientsList(BaseFlaskTest):
         'redirect_uri_regex': '^http://localhost:'
             + str(CONFIDENTIAL_CLIENT_PORT)
             + r'/(resource1)|(resource2)/?(\?.+)?$',
+        'allowed_scopes': ['foo', 'bar', 'baz'],
+        'default_scopes': ['bar', 'baz'],
+        'audience_for': ['bar'],
     }
 
     def test_should_return_401_with_no_credentials(self):
@@ -68,9 +71,7 @@ class PostClientsList(BaseFlaskTest):
 
         response_data = json.loads(response.data)
 
-        for posted_key, posted_value in (
-                self.VALID_CONFIDENTIAL_CLIENT.iteritems()):
-            self.assertEqual(response_data[posted_key], posted_value)
+        self.compare_client_data(response_data, self.VALID_CONFIDENTIAL_CLIENT)
 
     def test_should_persist_client_data_with_admin_credentials(self):
         post_response = self.client.post('/v1/clients',
@@ -87,6 +88,17 @@ class PostClientsList(BaseFlaskTest):
 
         response_data = json.loads(get_response.data)
 
-        for posted_key, posted_value in (
-                self.VALID_CONFIDENTIAL_CLIENT.iteritems()):
-            self.assertEqual(response_data[posted_key], posted_value)
+        self.compare_client_data(response_data, self.VALID_CONFIDENTIAL_CLIENT)
+
+    CLIENT_DATA_COMPARISON_WRAPPERS = {
+        'type': lambda x: x,
+        'name': lambda x: x,
+        'redirect_uri_regex': lambda x: x,
+        'allowed_scopes': set,
+        'default_scopes': set,
+        'audience_for': set,
+    }
+    def compare_client_data(self, actual, expected):
+        for posted_key, posted_value in expected.iteritems():
+            wrapper = self.CLIENT_DATA_COMPARISON_WRAPPERS[posted_key]
+            self.assertEqual(wrapper(actual[posted_key]), wrapper(posted_value))
