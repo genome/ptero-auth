@@ -65,7 +65,7 @@ class Client(Base):
             'allowed_scopes': sorted([s.value for s in self.allowed_scopes]),
             'audience_for': sorted([s.value for s in self.audience_for]),
             'client_id': self.client_id,
-            'created_at': time.mktime(self.created_at.utctimetuple()),
+            'created_at': int(time.mktime(self.created_at.utctimetuple())),
             'created_by': self.created_by.name,
             'default_scopes': sorted([s.value for s in self.default_scopes]),
             'name': self.client_name,
