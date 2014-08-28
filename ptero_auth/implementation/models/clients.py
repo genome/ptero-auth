@@ -61,16 +61,16 @@ class Client(Base):
     @property
     def as_dict(self):
         return {
-            'client_id': self.client_id,
-            'name': self.client_name,
-            'type': self.client_type,
             'active': self.active,
+            'allowed_scopes': sorted([s.value for s in self.allowed_scopes]),
+            'audience_for': sorted([s.value for s in self.audience_for]),
+            'client_id': self.client_id,
             'created_at': time.mktime(self.created_at.utctimetuple()),
             'created_by': self.created_by.name,
-            'redirect_uri_regex': self.redirect_uri_regex,
-            'allowed_scopes': sorted([s.value for s in self.allowed_scopes]),
             'default_scopes': sorted([s.value for s in self.default_scopes]),
-            'audience_for': sorted([s.value for s in self.audience_for]),
+            'name': self.client_name,
+            'redirect_uri_regex': self.redirect_uri_regex,
+            'type': self.client_type,
         }
 
 
