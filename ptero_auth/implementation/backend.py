@@ -33,3 +33,6 @@ class Backend(object):
         user_info = self.user_info_provider.get_user_data(user, ['roles'])
 
         return self.admin_role in user_info['roles']
+
+    def register_client(self, client_data):
+        return client_data

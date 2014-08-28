@@ -47,3 +47,16 @@ class PostClientsList(BaseFlaskTest):
                 })
 
         self.assertEqual(response.status_code, 201)
+
+    def test_should_return_client_data_with_admin_credentials(self):
+        response = self.client.post('/v1/clients',
+                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
+                headers={
+                    'Authorization': self.basic_auth_header('alice', 'apass'),
+                })
+
+        response_data = json.loads(response.data)
+
+        for posted_key, posted_value in (
+                self.VALID_CONFIDENTIAL_CLIENT.iteritems()):
+            self.assertEqual(response_data[posted_key], posted_value)
