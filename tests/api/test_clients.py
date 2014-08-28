@@ -29,3 +29,12 @@ class PostClientsList(BaseFlaskTest):
                 data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT))
 
         self.assertEqual(response.status_code, 401)
+
+    def test_should_return_401_with_invalid_credentials(self):
+        response = self.client.post('/v1/clients',
+                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
+                headers={
+                    'Authorization': self.basic_auth_header('alice', 'nopass'),
+                })
+
+        self.assertEqual(response.status_code, 401)
