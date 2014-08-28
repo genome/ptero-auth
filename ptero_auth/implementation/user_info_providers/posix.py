@@ -41,7 +41,7 @@ class PosixUserInfoProvider(BaseUserInfoProvider):
             if field_name not in _FIELD_CONSTRUCTORS:
                 raise exceptions.InvalidFieldName(field_name)
 
-            result['field_name'] = _FIELD_CONSTRUCTORS[field_name](user)
+            result[field_name] = _FIELD_CONSTRUCTORS[field_name](user)
 
         return result
 
