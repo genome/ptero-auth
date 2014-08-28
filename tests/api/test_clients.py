@@ -15,15 +15,6 @@ class PostClientsList(BaseFlaskTest):
             + r'/(resource1)|(resource2)/?(\?.+)?$',
     }
 
-    def test_should_return_201_with_admin_credentials(self):
-        response = self.client.post('/v1/clients',
-                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
-                headers={
-                    'Authorization': self.basic_auth_header('alice', 'apass'),
-                })
-
-        self.assertEqual(response.status_code, 201)
-
     def test_should_return_401_with_no_credentials(self):
         response = self.client.post('/v1/clients',
                 data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT))
@@ -47,3 +38,12 @@ class PostClientsList(BaseFlaskTest):
                 })
 
         self.assertEqual(response.status_code, 403)
+
+    def test_should_return_201_with_admin_credentials(self):
+        response = self.client.post('/v1/clients',
+                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
+                headers={
+                    'Authorization': self.basic_auth_header('alice', 'apass'),
+                })
+
+        self.assertEqual(response.status_code, 201)
