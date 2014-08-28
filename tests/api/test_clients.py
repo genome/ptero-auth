@@ -71,3 +71,22 @@ class PostClientsList(BaseFlaskTest):
         for posted_key, posted_value in (
                 self.VALID_CONFIDENTIAL_CLIENT.iteritems()):
             self.assertEqual(response_data[posted_key], posted_value)
+
+    def test_should_persist_client_data_with_admin_credentials(self):
+        post_response = self.client.post('/v1/clients',
+                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
+                headers={
+                    'Authorization': self.basic_auth_header('alice', 'apass'),
+                })
+
+        get_response = self.client.get(post_response.headers['Location'],
+                headers={
+                    'Authorization': self.basic_auth_header('alice', 'apass'),
+                })
+        self.assertEqual(get_response.status_code, 200)
+
+        response_data = json.loads(get_response.data)
+
+        for posted_key, posted_value in (
+                self.VALID_CONFIDENTIAL_CLIENT.iteritems()):
+            self.assertEqual(response_data[posted_key], posted_value)

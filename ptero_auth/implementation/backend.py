@@ -34,5 +34,20 @@ class Backend(object):
 
         return self.admin_role in user_info['roles']
 
-    def register_client(self, client_data):
-        return client_data
+    def register_client(self, user, client_data):
+        client = models.Client(
+                client_name=client_data['name'],
+                client_type=client_data['type'],
+                created_by=user,
+                redirect_uri_regex=client_data['redirect_uri_regex'])
+
+        self.session.add(client)
+        self.session.commit()
+        return client.as_dict
+
+    def get_client(self, client_id):
+        client = self.session.query(models.Client
+                ).filter_by(client_id=client_id).first()
+
+        if client:
+            return client.as_dict
