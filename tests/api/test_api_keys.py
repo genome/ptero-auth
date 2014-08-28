@@ -106,21 +106,24 @@ class PatchApiKey(BaseFlaskTest):
         self.bob_key = self.create_api_key('bob', 'foobob')
         self.charlie_key = self.create_api_key('charlie', 'charles')
 
-    def test_should_return_200_with_owner_credentials(self):
-        response = self.client.patch('/v1/api-keys/%s' % self.bob_key,
-            json.dumps({'active': False}),
+        self.default_test_key = self.bob_key
+
+    def patch_api_keys(self, data, username, password, key=None):
+        if key is None:
+            key = self.default_test_key
+
+        return self.client.patch('/v1/api-keys/%s' % key, json.dumps(data),
             headers={
-                'Authorization': self.basic_auth_header('bob', 'foobob'),
+                'Authorization': self.basic_auth_header(username, password),
         })
+
+    def test_should_return_200_with_owner_credentials(self):
+        response = self.patch_api_keys({'active': False}, 'bob', 'foobob')
 
         self.assertEqual(response.status_code, 200)
 
     def test_should_return_updated_api_key_data(self):
-        response = self.client.patch('/v1/api-keys/%s' % self.bob_key,
-            json.dumps({'active': False}),
-            headers={
-                'Authorization': self.basic_auth_header('bob', 'foobob'),
-        })
+        response = self.patch_api_keys({'active': False}, 'bob', 'foobob')
 
         data = json.loads(response.data)
         self.assertEqual(data['api-key'], self.bob_key)
@@ -128,11 +131,7 @@ class PatchApiKey(BaseFlaskTest):
 
 
     def test_should_persist_modified_data(self):
-        patch_response = self.client.patch('/v1/api-keys/%s' % self.bob_key,
-            json.dumps({'active': False}),
-            headers={
-                'Authorization': self.basic_auth_header('bob', 'foobob'),
-        })
+        patch_response = self.patch_api_keys({'active': False}, 'bob', 'foobob')
 
         get_response = self.client.get('/v1/api-keys/%s' % self.bob_key,
             headers={
@@ -143,28 +142,17 @@ class PatchApiKey(BaseFlaskTest):
         self.assertEqual(data['active'], False)
 
     def test_should_return_401_with_invalid_credentials(self):
-        response = self.client.patch('/v1/api-keys/%s' % self.bob_key,
-            json.dumps({'active': False}),
-            headers={
-                'Authorization': self.basic_auth_header('baduser', 'badpass'),
-        })
+        response = self.patch_api_keys({'active': False}, 'baduser', 'badpass')
 
         self.assertEqual(response.status_code, 401)
 
     def test_should_return_404_if_key_does_not_exist(self):
-        response = self.client.patch('/v1/api-keys/nonsense',
-            json.dumps({'active': False}),
-            headers={
-                'Authorization': self.basic_auth_header('charlie', 'charles'),
-        })
+        response = self.patch_api_keys({'active': False}, 'charlie', 'charles',
+                key='/v1/api-keys/nonsense')
 
         self.assertEqual(response.status_code, 404)
 
     def test_should_return_404_with_other_credentials(self):
-        response = self.client.patch('/v1/api-keys/%s' % self.bob_key,
-            json.dumps({'active': False}),
-            headers={
-                'Authorization': self.basic_auth_header('charlie', 'charles'),
-        })
+        response = self.patch_api_keys({'active': False}, 'charlie', 'charles')
 
         self.assertEqual(response.status_code, 404)
