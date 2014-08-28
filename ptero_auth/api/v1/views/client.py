@@ -12,7 +12,7 @@ class ClientListView(Resource):
         pass
 
     def post(self):
-        pass
+        return None, 201
 
 
 class ClientView(Resource):
