@@ -68,12 +68,11 @@ class ConfidentialClient(Client):
     client_secret = Column(Text, default=lambda: generate_id('cs'))
 
     def authenticate(self, client_id, client_secret=None):
-        if not isinstance(client_secret, str) or not isinstance(client_id, str):
-            return False
-        else:
-            return (self.active
-                    and compare_digest(self.client_id, client_id)
-                    and compare_digest(self.client_secret, client_secret))
+        return (self.active
+                and isinstance(client_secret, str)
+                and isinstance(client_id, str)
+                and compare_digest(self.client_id, client_id)
+                and compare_digest(self.client_secret, client_secret))
 
     _VALID_GRANT_TYPES = set([
         'authorization_code',
