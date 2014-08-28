@@ -38,5 +38,6 @@ def get_from_env():
     result['database_url'] = os.environ['DATABASE_URL']
     result['auth_url'] = os.environ['AUTH_URL']
     result['port'] = port(result['auth_url'])
+    result['admin_role'] = os.environ.get('ADMIN_ROLE', 'pteroadmin')
 
     return result

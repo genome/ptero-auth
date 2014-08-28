@@ -4,6 +4,7 @@ from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text
 from sqlalchemy.orm import relationship
 import datetime
 import re
+import time
 
 
 __all__ = ['Client', 'ConfidentialClient', 'PublicClient']
@@ -29,8 +30,7 @@ class Client(Base):
     created_by = relationship('User', foreign_keys=[created_by_pk])
 
     deactivated_at = Column(DateTime(timezone=True), index=True)
-    deactivated_by_pk = Column(Integer, ForeignKey('user.user_pk'),
-            nullable=False)
+    deactivated_by_pk = Column(Integer, ForeignKey('user.user_pk'))
     deactivated_by = relationship('User', foreign_keys=[deactivated_by_pk])
 
     redirect_uri_regex = Column(Text, nullable=False)
@@ -57,6 +57,21 @@ class Client(Base):
     @property
     def default_scope_set(self):
         return set(s.value for s in self.default_scopes)
+
+    @property
+    def as_dict(self):
+        return {
+            'active': self.active,
+            'allowed_scopes': sorted([s.value for s in self.allowed_scopes]),
+            'audience_for': sorted([s.value for s in self.audience_for]),
+            'client_id': self.client_id,
+            'created_at': int(time.mktime(self.created_at.utctimetuple())),
+            'created_by': self.created_by.name,
+            'default_scopes': sorted([s.value for s in self.default_scopes]),
+            'name': self.client_name,
+            'redirect_uri_regex': self.redirect_uri_regex,
+            'type': self.client_type,
+        }
 
 
 class ConfidentialClient(Client):
