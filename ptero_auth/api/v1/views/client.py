@@ -1,6 +1,6 @@
 from . import common
 from ptero_auth import exceptions
-from flask import g, request
+from flask import g, request, url_for
 from flask.ext.restful import Resource
 import json
 import logging
@@ -23,7 +23,9 @@ class ClientListView(Resource):
 
         client_data = g.backend.register_client(json.loads(request.data))
 
-        return client_data, 201
+        return client_data, 201, {
+            'Location': url_for('client', client_id='no-client-id'),
+        }
 
 
 class ClientView(Resource):

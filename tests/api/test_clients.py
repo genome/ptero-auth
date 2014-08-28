@@ -1,5 +1,6 @@
 from .base import BaseFlaskTest
 import json
+import re
 import unittest
 
 
@@ -47,6 +48,16 @@ class PostClientsList(BaseFlaskTest):
                 })
 
         self.assertEqual(response.status_code, 201)
+
+    def test_should_set_location_header_with_admin_credentials(self):
+        response = self.client.post('/v1/clients',
+                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
+                headers={
+                    'Authorization': self.basic_auth_header('alice', 'apass'),
+                })
+
+        self.assertTrue(re.match('http://localhost/v1/clients/\w+',
+            response.headers['Location']))
 
     def test_should_return_client_data_with_admin_credentials(self):
         response = self.client.post('/v1/clients',
