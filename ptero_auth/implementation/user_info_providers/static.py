@@ -15,4 +15,4 @@ class StaticUserInfoProvider(BaseUserInfoProvider):
         return result
 
     def validate_password(self, user, password):
-        return self.data['passwords'][user.name] == password
+        return self.data.get('passwords', {}).get(user.name) == password

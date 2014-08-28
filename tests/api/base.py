@@ -1,6 +1,7 @@
 from Crypto.PublicKey import RSA
 from ptero_auth.api.application import create_app
 from .. import util
+import json
 import os
 import requests.auth
 import unittest
@@ -64,3 +65,11 @@ class BaseFlaskTest(unittest.TestCase):
 
     def basic_auth_header(self, username, password):
         return requests.auth._basic_auth_str(username, password)
+
+    def create_api_key(self, username, password):
+        response = self.client.post('/v1/api-keys', headers={
+            'Authorization': self.basic_auth_header(username, password),
+        })
+
+        data = json.loads(response.data)
+        return data['api-key']

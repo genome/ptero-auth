@@ -55,4 +55,5 @@ class Key(Base):
     def as_dict(self):
         return {
             'api-key': self.key,
+            'active': self.active,
         }

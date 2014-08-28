@@ -24,7 +24,25 @@ class ApiKeyListView(Resource):
 
 class ApiKeyView(Resource):
     def get(self, api_key):
-        pass
+        user = g.backend.get_user_from_authorization(request.authorization)
+        if not user:
+            return common.require_authorization()
+
+        key = g.backend.get_api_key_for_user(user, api_key)
+        if not key:
+            return None, 404
+
+        return key.as_dict
 
     def patch(self, api_key):
-        pass
+        user = g.backend.get_user_from_authorization(request.authorization)
+        if not user:
+            return common.require_authorization()
+
+        key = g.backend.get_api_key_for_user(user, api_key)
+        if not key:
+            return None, 404
+
+        g.backend.deactivate_api_key(key)
+
+        return key.as_dict
