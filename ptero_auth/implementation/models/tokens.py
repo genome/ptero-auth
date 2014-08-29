@@ -24,12 +24,18 @@ class RefreshToken(Base):
             default=lambda: datetime.datetime.utcnow()
                 + datetime.timedelta(days=30))
 
+    client_pk = Column(Integer, ForeignKey('client.client_pk'), nullable=False)
+    user_pk = Column(Integer, ForeignKey('user.user_pk'), nullable=False)
+
+    client = relationship('Client')
+    user = relationship('User')
+
     active = Column(Boolean, nullable=False, default=False)
     deactivated_at = Column(DateTime(timezone=True), index=True)
 
-    grant_pk = Column(Integer, ForeignKey('grant.grant_pk'), nullable=False)
+    grant_pk = Column(Integer, ForeignKey('authorization_code_grant.grant_pk'), nullable=False)
 
-    grant = relationship('Grant')
+    grant = relationship('AuthorizationCodeGrant')
 
 
 class AccessToken(Base):

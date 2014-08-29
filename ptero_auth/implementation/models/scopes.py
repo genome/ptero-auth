@@ -36,7 +36,7 @@ scope_audience_table = Table('scope_audience_bridge', Base.metadata,
 
 
 grant_scope_table = Table('grant_scope_bridge', Base.metadata,
-    Column('grant_pk', Integer, ForeignKey('grant.grant_pk')),
+    Column('grant_pk', Integer, ForeignKey('authorization_code_grant.grant_pk')),
     Column('scope_pk', Integer, ForeignKey('scope.scope_pk')),
     PrimaryKeyConstraint('grant_pk', 'scope_pk')
 )
