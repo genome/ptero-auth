@@ -34,9 +34,14 @@ scope_audience_table = Table('scope_audience_bridge', Base.metadata,
     PrimaryKeyConstraint('client_pk', 'scope_pk')
 )
 
-
 grant_scope_table = Table('grant_scope_bridge', Base.metadata,
     Column('grant_pk', Integer, ForeignKey('authorization_code_grant.grant_pk')),
     Column('scope_pk', Integer, ForeignKey('scope.scope_pk')),
     PrimaryKeyConstraint('grant_pk', 'scope_pk')
+)
+
+refresh_token_scope_table = Table('refresh_token_scope_bridge', Base.metadata,
+    Column('refresh_token_pk', Integer, ForeignKey('refresh_token.refresh_token_pk')),
+    Column('scope_pk', Integer, ForeignKey('scope.scope_pk')),
+    PrimaryKeyConstraint('refresh_token_pk', 'scope_pk')
 )

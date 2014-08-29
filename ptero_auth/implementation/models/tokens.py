@@ -28,6 +28,5 @@ class RefreshToken(Base):
     active = Column(Boolean, nullable=False, default=False)
     deactivated_at = Column(DateTime(timezone=True), index=True)
 
-    grant_pk = Column(Integer, ForeignKey('authorization_code_grant.grant_pk'), nullable=False)
+    scopes = relationship('Scope', secondary='refresh_token_scope_bridge')
 
-    grant = relationship('AuthorizationCodeGrant')
