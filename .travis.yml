@@ -14,8 +14,8 @@ before_script:
 script: tox
 
 after_success:
-    - pip install coveralls
-    - coveralls
+    - 'if [ $TEST_POSIX_PROVIDER ]; then pip install coveralls; else echo Skipping "pip install coveralls"; fi'
+    - 'if [ $TEST_POSIX_PROVIDER ]; then coveralls; else echo Skipping "coveralls"; fi'
 
 branches:
     only:

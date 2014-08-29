@@ -16,7 +16,7 @@ class StaticUserInfoProvider(BaseUserInfoProvider):
         return result
 
     def validate_password(self, user, password):
-        actual_password = self.data['passwords'][user.name]
-        return (isinstance(actual_password, str)
+        correct_password = self.data.get('passwords', {}).get(user.name)
+        return (isinstance(correct_password, str)
                 and isinstance(password, str)
-                and compare_digest(actual_password, password))
+                and compare_digest(correct_password, password))

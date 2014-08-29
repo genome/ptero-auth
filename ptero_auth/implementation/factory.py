@@ -17,8 +17,10 @@ class Factory(object):
 
     def create_backend(self):
         self._initialize()
-        return backend.Backend(self._Session(), self.settings['signature_key'],
-                self.user_info_provider)
+        return backend.Backend(self._Session(),
+                signature_key=self.settings['signature_key'],
+                user_info_provider=self.user_info_provider,
+                admin_role=self.settings['admin_role'])
 
     def _initialize(self):
         # Lazy initialize to be pre-fork friendly.
