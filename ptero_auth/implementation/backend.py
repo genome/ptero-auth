@@ -60,7 +60,7 @@ class Backend(object):
         assert default_scopes.issubset(allowed_scopes)
         assert audience_for.issubset(allowed_scopes)
 
-        client = models.Client(
+        client = models.create_client(
                 client_name=client_data['name'],
                 client_type=client_data['type'],
                 created_by=user,

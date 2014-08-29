@@ -7,7 +7,7 @@ import re
 import time
 
 
-__all__ = ['Client', 'ConfidentialClient', 'PublicClient']
+__all__ = ['Client', 'ConfidentialClient', 'PublicClient', 'create_client']
 
 
 class Client(Base):
@@ -129,3 +129,12 @@ class PublicClient(Client):
     ])
     def is_valid_response_type(self, response_type):
         return response_type in self._VALID_RESPONSE_TYPES
+
+
+_CLIENT_TYPES = {
+    'confidential': ConfidentialClient,
+    'public': PublicClient,
+}
+def create_client(client_type=None, **kwargs):
+    cls = _CLIENT_TYPES[client_type]
+    return cls(**kwargs)
