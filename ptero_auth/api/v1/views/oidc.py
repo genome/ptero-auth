@@ -19,33 +19,43 @@ class AuthorizeView(Resource):
         except exceptions.NoApiKey:
             return common.require_authorization('API-Key')
 
+        user = g.backend.get_user_from_api_key(api_key)
+        if not user:
+            return None, 403
+
         scopes = self._get_scopes()
 
-        return g.oidc_server.create_authorization_response(uri=request.url,
-                headers=request.headers, scopes=scopes,
-                credentials={'api_key': api_key})
+        header, body, status_code = g.backend.oidc_server.create_authorization_response(
+                uri=request.url, headers=request.headers, scopes=scopes,
+                credentials={'user': user})
+
+        return body, status_code, header
 
     def _get_api_key(self):
-        authorization = request.authorization
-        if not authorization or not authorization.startswith('Bearer '):
+        authorization = request.headers.get('Authorization')
+        if not authorization or not authorization.startswith('API-Key '):
             raise exceptions.NoApiKey()
 
         return authorization[8:]
 
     def _get_scopes(self):
-        scope = request.args['scope']
+        scope = request.args.get('scope')
         if not scope:
-            return []
+            return self._get_default_scopes()
 
         else:
             return scope.split(' ')
+
+    def _get_default_scopes(self):
+        client = g.backend.get_client(request.args.get('client_id'))
+        return client['default_scopes']
 
 
 class TokenView(Resource):
     def post(self):
         regenerated_body = urllib.urlencode(request.form)
 
-        headers, body, status_code = g.oidc_server.create_token_response(
+        header, body, status_code = g.backend.oidc_server.create_token_response(
                 uri=request.url, headers=request.headers, body=regenerated_body)
 
-        return body, status_code, headers
+        return body, status_code, header

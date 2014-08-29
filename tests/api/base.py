@@ -73,3 +73,13 @@ class BaseFlaskTest(unittest.TestCase):
 
         data = json.loads(response.data)
         return data['api-key']
+
+    def register_client(self, username, password, **data):
+        response = self.client.post('/v1/clients', data=json.dumps(data),
+                headers={
+                    'Authorization': self.basic_auth_header(username, password),
+                })
+
+        self.assertEqual(response.status_code, 201)
+
+        return json.loads(response.data)

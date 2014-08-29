@@ -51,29 +51,20 @@ class OIDCRequestValidator(RequestValidator):
     def validate_scopes(self, client_id, scopes, client, request):
         c = self._get_client(client_id)
 
-        if scopes:
-            requested_scopes = set(scopes)
-        else:
-            requested_scopes = set()
-        allowed_scopes = set(c.scopes)
-
-        result = requested_scopes.issubset(allowed_scopes)
-
-        return result
+        return c.is_valid_scope_set(set(scopes))
 
     def get_default_scopes(self, client_id, request):
-        return self._get_client(client_id).scopes
+        return self._get_client(client_id).default_scopes
 
     def validate_response_type(self, client_id, response_type, client, request):
         c = self._get_client(client_id)
-        return response_type == c.response_type
+        return c.is_valid_response_type(response_type)
 
     def save_authorization_code(self, client_id, code, request):
-        key = self._get_key(request)
-
-        ac = models.AuthorizationCode(code=code['code'],
-                api_key=key, client=self._get_client(client_id))
-        ac.scope = request.scopes
+        ac = models.AuthorizationCodeGrant(code=code['code'],
+                user=request.user, client=self._get_client(client_id))
+        ac.scopes = self.session.query(models.Scope
+                ).filter(models.Scope.value.in_(request.scopes)).all()
         self.session.add(ac)
         self.session.commit()
 

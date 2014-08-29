@@ -23,6 +23,11 @@ class Backend(object):
                 authorization.password):
             return user
 
+    def get_user_from_api_key(self, api_key):
+        key = self.session.query(models.Key).filter_by(key=api_key).first()
+        if key:
+            return key.user
+
     def create_api_key_for_user(self, user):
         key = models.Key(user=user)
         self.session.add(key)
