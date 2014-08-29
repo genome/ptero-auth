@@ -1,6 +1,6 @@
 from Crypto.PublicKey import RSA
 from ptero_auth.api.application import create_app
-from .. import rsa, util
+from .. import rsa_key, util
 import json
 import os
 import requests.auth
@@ -10,7 +10,7 @@ import yaml
 
 _SIGNATURE_KEY = {
     'signature_alg': 'RS256',
-    'signature_key': RSA.importKey(rsa.TESTING_PRIVATE_KEY),
+    'signature_key': RSA.importKey(rsa_key.TESTING_PRIVATE_KEY),
     'signature_kid': 'testing-key',
 }
 

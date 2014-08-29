@@ -1,7 +1,7 @@
 import unittest
 import os
 from ptero_auth.settings import get_from_env
-from . import rsa
+from . import rsa_key
 
 
 class SettingsTest (unittest.TestCase):
@@ -9,7 +9,7 @@ class SettingsTest (unittest.TestCase):
         'DATABASE_URL': 'foo1',
         'AUTH_URL': 'http://localhost:8000/',
         'ADMIN_ROLE': 'foo2',
-        'SIGNATURE_KEY': rsa.TESTING_PRIVATE_KEY,
+        'SIGNATURE_KEY': rsa_key.TESTING_PRIVATE_KEY,
     }
 
     def setUp(self):
