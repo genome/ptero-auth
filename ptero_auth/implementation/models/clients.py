@@ -1,6 +1,6 @@
 from .base import Base
 from .util import generate_id
-from hmac import compare_digest
+from ptero_auth.utils import safe_compare
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text
 from sqlalchemy.orm import relationship
 import datetime
@@ -84,10 +84,8 @@ class ConfidentialClient(Client):
 
     def authenticate(self, client_id, client_secret=None):
         return (self.active
-                and isinstance(client_secret, str)
-                and isinstance(client_id, str)
-                and compare_digest(self.client_id, client_id)
-                and compare_digest(self.client_secret, client_secret))
+                and safe_compare(self.client_id, client_id)
+                and safe_compare(self.client_secret, client_secret))
 
     _VALID_GRANT_TYPES = set([
         'authorization_code',

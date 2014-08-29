@@ -1,6 +1,6 @@
 from .. import models
 from oauthlib.oauth2 import RequestValidator
-from hmac import compare_digest
+from ptero_auth.utils import safe_compare
 
 
 class OIDCRequestValidator(RequestValidator):
@@ -84,9 +84,7 @@ class OIDCRequestValidator(RequestValidator):
 
     def authenticate_client(self, request):
         c = self._get_client(request.client_id)
-        if (isinstance(request.client_secret, str)
-                and isinstance(c.client_secret, str)
-                and compare_digest(request.client_secret, c.client_secret)):
+        if safe_compare(request.client_secret, c.client_secret):
             request.client = c
             return True
 
