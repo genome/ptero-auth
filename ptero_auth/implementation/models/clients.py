@@ -44,6 +44,10 @@ class Client(Base):
     def authenticate(self, client_id, client_secret=None):
         return NotImplemented
 
+    @property
+    def requires_authentication(self):
+        return NotImplemented
+
     def is_valid_redirect_uri(self, redirect_uri):
         return re.match(self.redirect_uri_regex, redirect_uri)
 
@@ -81,6 +85,10 @@ class ConfidentialClient(Client):
 
     client_secret = Column(Text, default=lambda: generate_id('cs'))
 
+    @property
+    def requires_authentication(self):
+        return True
+
     def authenticate(self, client_id, client_secret=None):
         return (self.active
                 and self.client_id == client_id
@@ -102,6 +110,10 @@ class PublicClient(Client):
     __mapper_args__ = {
         'polymorphic_identity': 'public',
     }
+
+    @property
+    def requires_authentication(self):
+        return False
 
     def authenticate(self, client_id, client_secret=None):
         return self.active

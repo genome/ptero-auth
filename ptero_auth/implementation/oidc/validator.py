@@ -40,7 +40,8 @@ class OIDCRequestValidator(RequestValidator):
 
 
     def validate_client_id(self, client_id, request):
-        return self._get_client(client_id) is not None
+        request.client = self._get_client(client_id)
+        return request.client is not None
 
     def validate_redirect_uri(self, client_id, redirect_uri, request):
         # XXX Needed
@@ -69,17 +70,32 @@ class OIDCRequestValidator(RequestValidator):
         self.session.commit()
 
     def client_authentication_required(self, request):
-        c = self._get_client(request.client_id)
-        return c.requires_validation
+        request.client = self._get_client(self._get_client_id(request))
+        return request.client.requires_authentication
 
-    def authenticate_client(self, request):
-        c = self._get_client(request.client_id)
-        if request.client_secret == c.client_secret:
-            request.client = c
-            return True
+    def _get_client_id(self, request):
+        if request.client_id:
+            return request.client_id
 
         else:
-            return False
+            auth = request.extra_credentials.get('flask-auth')
+            if auth and hasattr(auth, 'username'):
+                request.client_id = auth.username
+                return auth.username
+
+    def _get_client_secret(self, request):
+        if request.client_secret:
+            return request.client_secret
+
+        else:
+            auth = request.extra_credentials.get('flask-auth')
+            if auth and hasattr(auth, 'password'):
+                request.client_secret = auth.password
+                return auth.password
+
+    def authenticate_client(self, request):
+        client_secret = self._get_client_secret(request)
+        return client_secret == request.client.client_secret
 
     def validate_grant_type(self, client_id, grant_type, client, request):
         return grant_type == client.grant_type

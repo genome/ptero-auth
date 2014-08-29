@@ -53,9 +53,8 @@ class AuthorizeView(Resource):
 
 class TokenView(Resource):
     def post(self):
-        regenerated_body = urllib.urlencode(request.form)
-
         header, body, status_code = g.backend.oidc_server.create_token_response(
-                uri=request.url, headers=request.headers, body=regenerated_body)
+                uri=request.url, headers=request.headers, body=request.data,
+                credentials={'flask-auth': request.authorization})
 
         return body, status_code, header
