@@ -1,6 +1,7 @@
 from .base import BaseFlaskTest
 import json
 import urllib
+import urlparse
 
 
 CONFIDENTIAL_CLIENT_PORT = 8008
@@ -53,3 +54,12 @@ class GetAuthorize(BaseFlaskTest):
                 headers={'Authorization': 'API-Key ' + self.bob_key})
 
         self.assertEqual(response.status_code, 302)
+
+    def test_should_redirect_with_authorization_code(self):
+        response = self.client.get(self.authorize_url(),
+                headers={'Authorization': 'API-Key ' + self.bob_key})
+
+        url = urlparse.urlparse(response.headers['Location'])
+        args = urlparse.parse_qs(url.query)
+
+        self.assertIn('code', args)
