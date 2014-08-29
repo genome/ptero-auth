@@ -1,7 +1,6 @@
 from .base import BaseFlaskTest
 import json
 import re
-import unittest
 
 
 class PostApiKeyList(BaseFlaskTest):
