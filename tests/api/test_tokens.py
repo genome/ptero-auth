@@ -49,13 +49,19 @@ class PostTokens(BaseFlaskTest):
         url = urlparse.urlparse(response.headers['Location'])
         args = urlparse.parse_qs(url.query)
 
-        args['redirect_uri'] = response.headers['Location'].split('?')[0]
+        for name,value in args.items():
+            args[name] = value[0]
 
+        args['redirect_uri'] = response.headers['Location'].split('?')[0]
         return args
 
     @property
     def client_id(self):
         return self.valid_client_data['client_id']
+
+    @property
+    def client_secret(self):
+        return self.valid_client_data['client_secret']
 
     def get_post_data(self):
         return urllib.urlencode({
@@ -73,3 +79,13 @@ class PostTokens(BaseFlaskTest):
                 })
 
         self.assertEqual(response.status_code, 401)
+
+    def test_should_return_200_with_valid_client_credentials(self):
+        response = self.client.post('/v1/tokens', data=self.get_post_data(),
+                headers={
+                    'Authorization': self.basic_auth_header(self.client_id,
+                        self.client_secret),
+                    'Contet-Type': 'application/x-www-form-urlencoded',
+                })
+
+        self.assertEqual(response.status_code, 200)

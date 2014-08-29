@@ -13,6 +13,8 @@ class RefreshToken(Base):
 
     refresh_token_pk = Column(Integer, primary_key=True)
 
+    token = Column(Text, index=True, nullable=False, unique=True)
+
     created_at = Column(DateTime(timezone=True), index=True, nullable=False,
             default=datetime.datetime.utcnow)
     expires_at = Column(DateTime(timezone=True), index=True, nullable=False,

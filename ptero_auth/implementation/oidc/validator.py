@@ -17,28 +17,6 @@ class OIDCRequestValidator(RequestValidator):
         return self.session.query(models.Key
                 ).filter_by(key=request.headers['Authorization'][8:]).one()
 
-    def get_user(self, request):
-        if request.code:
-            ac = self.session.query(models.AuthorizationCode
-                    ).filter_by(code=request.code).one()
-            return ac.api_key.user
-
-        else:
-            # XXX Is this used?
-            key = self._get_key(request)
-            return key.user
-
-    def get_scopes(self, request):
-        if request.scope:
-            return request.scope.split(' ')
-
-        elif request.code:
-            ac = self.session.query(models.AuthorizationCode
-                    ).filter_by(code=request.code).one()
-
-            return ac.scope
-
-
     def validate_client_id(self, client_id, request):
         request.client = self._get_client(client_id)
         return request.client is not None
@@ -98,34 +76,28 @@ class OIDCRequestValidator(RequestValidator):
         return client_secret == request.client.client_secret
 
     def validate_grant_type(self, client_id, grant_type, client, request):
-        return grant_type == client.grant_type
+        return client.is_valid_grant_type(grant_type)
 
     def validate_code(self, client_id, code, client, request):
-        return self.session.query(models.AuthorizationCode).filter_by(
+        ac = self.session.query(models.AuthorizationCodeGrant).filter_by(
                 code=code, client=client).first()
+        if ac:
+            request.user = ac.user
+            request.scopes = [ s.value for s in ac.scopes ]
+            return True
+        else:
+            return False
 
     def confirm_redirect_uri(self, client_id, code, redirect_uri, client):
         # XXX Should be picky, maybe each client registers a regex?
         return True
 
     def save_bearer_token(self, token, request):
-        code = self.session.query(models.AuthorizationCode
-                ).filter_by(code=request.code).first()
-
-        if not code:
-            # XXX Be sure to set this code as inactive
-            client = self._get_client(request.client_id)
-            code = models.AuthorizationCode(client=client,
-                    api_key=self._get_key(request))
-            code.scope = request.scopes
-            self.session.add(code)
-
-        r = models.RefreshToken(token=token.get('refresh_token'),
-                authorization_code=code)
-        a = models.AccessToken(token=token['access_token'], refresh_token=r)
-        self.session.add(r)
-        self.session.add(a)
-        self.session.commit()
+        if 'refresh_token' in token:
+            r = models.RefreshToken(token=token.get('refresh_token'),
+                    user=request.user, client=request.client)
+            self.session.add(r)
+            self.session.commit()
 
     def invalidate_authorization_code(self, client_id, code, request):
         # XXX Should flag the code as inactive/invalid

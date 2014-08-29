@@ -73,7 +73,12 @@ class Backend(object):
         self.session.add(client)
         self.session.commit()
 
-        return client.as_dict
+        result = client.as_dict
+
+        if client.client_type == 'confidential':
+            result['client_secret'] = client.client_secret
+
+        return result
 
     def _create_or_get_scopes(self, scope_values):
         result = {}
