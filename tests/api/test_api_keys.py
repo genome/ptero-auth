@@ -17,7 +17,8 @@ class PostApiKeyList(BaseFlaskTest):
     def test_should_set_www_authenticate_header_with_invalid_user(self):
         response = self.post_api_key('baduser', 'badpass')
 
-        self.assertEqual(response.headers['WWW-Authenticate'], 'API-Key')
+        self.assertEqual(response.headers['WWW-Authenticate'],
+                'Basic realm="ptero"')
 
     def test_should_return_401_with_invalid_password(self):
         response = self.post_api_key('alice', 'badpass')
@@ -27,7 +28,8 @@ class PostApiKeyList(BaseFlaskTest):
     def test_should_set_www_authenticate_header_with_invalid_password(self):
         response = self.post_api_key('alice', 'badpass')
 
-        self.assertEqual(response.headers['WWW-Authenticate'], 'API-Key')
+        self.assertEqual(response.headers['WWW-Authenticate'],
+                'Basic realm="ptero"')
 
     def test_should_return_201(self):
         response = self.post_api_key('alice', 'apass')
