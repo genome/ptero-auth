@@ -73,14 +73,7 @@ class OIDCRequestValidator(RequestValidator):
                 return auth.password
 
     def authenticate_client(self, request):
-        c = self._get_client(request.client_id)
-        if safe_compare(request.client_secret, c.client_secret):
-            request.client = c
-            return True
-
-    def authenticate_client(self, request):
-        client_secret = self._get_client_secret(request)
-        return client_secret == request.client.client_secret
+        return request.client.authenticate(self._get_client_secret(request))
 
     def validate_grant_type(self, client_id, grant_type, client, request):
         return client.is_valid_grant_type(grant_type)

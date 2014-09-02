@@ -42,11 +42,11 @@ class Client(Base):
     audience_for = relationship('Scope', secondary='scope_audience_bridge',
             backref='audience')
 
-    def authenticate(self, client_id, client_secret=None):
+    def authenticate(self, client_secret=None):  # pragma: no cover
         return NotImplemented
 
     @property
-    def requires_authentication(self):
+    def requires_authentication(self):  # pragma: no cover
         return NotImplemented
 
     def is_valid_redirect_uri(self, redirect_uri):
@@ -90,10 +90,8 @@ class ConfidentialClient(Client):
     def requires_authentication(self):
         return True
 
-    def authenticate(self, client_id, client_secret=None):
-        return (self.active
-                and safe_compare(self.client_id, client_id)
-                and safe_compare(self.client_secret, client_secret))
+    def authenticate(self, client_secret=None):
+        return (self.active and safe_compare(self.client_secret, client_secret))
 
     _VALID_GRANT_TYPES = set([
         'authorization_code',
@@ -116,7 +114,7 @@ class PublicClient(Client):
     def requires_authentication(self):
         return False
 
-    def authenticate(self, client_id, client_secret=None):
+    def authenticate(self, client_secret=None):
         return self.active
 
     def is_valid_grant_type(self, grant_type):
