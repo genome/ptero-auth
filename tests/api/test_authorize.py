@@ -28,11 +28,15 @@ class GetAuthorize(BaseFlaskTest):
         self.redirect_uri = ('http://localhost:%d/resource1/asdf'
                 % CONFIDENTIAL_CLIENT_PORT)
 
-    def authorize_url(self, response_type='code', scopes=None):
+    def authorize_url(self, response_type='code', redirect_uri=None,
+            scopes=None):
+        if redirect_uri is None:
+            redirect_uri = self.redirect_uri
+
         args = {
             'client_id': self.valid_client_data['client_id'],
             'response_type': response_type,
-            'redirect_uri': self.redirect_uri,
+            'redirect_uri': redirect_uri,
             'state': 'OPAQUE VALUE FOR PREVENTING FORGERY ATTACKS',
         }
 
@@ -45,6 +49,13 @@ class GetAuthorize(BaseFlaskTest):
         response = self.client.get('/v1/authorize')
 
         self.assertEqual(response.status_code, 401)
+
+    def test_should_return_400_with_invalid_redirect_uri(self):
+        response = self.client.get(self.authorize_url(
+                redirect_uri='http://localhost:12000/something/invalid'),
+            headers={'Authorization': 'API-Key ' + self.bob_key})
+
+        self.assertEqual(response.status_code, 400)
 
     def test_should_return_www_authenticate_header_with_no_api_key(self):
         response = self.client.get('/v1/authorize')

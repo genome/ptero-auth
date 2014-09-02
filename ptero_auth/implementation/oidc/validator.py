@@ -23,10 +23,7 @@ class OIDCRequestValidator(RequestValidator):
         return request.client is not None
 
     def validate_redirect_uri(self, client_id, redirect_uri, request):
-        # XXX Needed
-        # Is the client allowed to use the supplied redirect_uri? i.e. has
-        # the client previously registered this EXACT redirect uri.
-        return True
+        return request.client.is_valid_redirect_uri(redirect_uri)
 
     def validate_scopes(self, client_id, scopes, client, request):
         c = self._get_client(client_id)
