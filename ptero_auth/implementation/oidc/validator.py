@@ -14,10 +14,6 @@ class OIDCRequestValidator(RequestValidator):
         return self.session.query(models.Client
                 ).filter_by(client_id=client_id).first()
 
-    def _get_key(self, request):
-        return self.session.query(models.Key
-                ).filter_by(key=request.headers['Authorization'][8:]).one()
-
     def validate_client_id(self, client_id, request):
         request.client = self._get_client(client_id)
         return request.client is not None
@@ -29,9 +25,6 @@ class OIDCRequestValidator(RequestValidator):
         c = self._get_client(client_id)
 
         return c.is_valid_scope_set(set(scopes))
-
-    def get_default_scopes(self, client_id, request):
-        return self._get_client(client_id).default_scopes
 
     def validate_response_type(self, client_id, response_type, client, request):
         c = self._get_client(client_id)
@@ -51,24 +44,16 @@ class OIDCRequestValidator(RequestValidator):
         return request.client.requires_authentication
 
     def _get_client_id(self, request):
-        if request.client_id:
-            return request.client_id
-
-        else:
-            auth = request.extra_credentials.get('flask-auth')
-            if auth and hasattr(auth, 'username'):
-                request.client_id = auth.username
-                return auth.username
+        auth = request.extra_credentials.get('flask-auth')
+        if auth and hasattr(auth, 'username'):
+            request.client_id = auth.username
+            return auth.username
 
     def _get_client_secret(self, request):
-        if request.client_secret:
-            return request.client_secret
-
-        else:
-            auth = request.extra_credentials.get('flask-auth')
-            if auth and hasattr(auth, 'password'):
-                request.client_secret = auth.password
-                return auth.password
+        auth = request.extra_credentials.get('flask-auth')
+        if auth and hasattr(auth, 'password'):
+            request.client_secret = auth.password
+            return auth.password
 
     def authenticate_client(self, request):
         return request.client.authenticate(self._get_client_secret(request))
@@ -91,9 +76,6 @@ class OIDCRequestValidator(RequestValidator):
                 code=code, client=client).first()
         if ac:
             return ac.redirect_uri == redirect_uri
-
-        else:
-            return False
 
     def save_bearer_token(self, token, request):
         if 'refresh_token' in token:
