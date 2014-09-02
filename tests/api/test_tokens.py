@@ -1,4 +1,5 @@
 from .base import BaseFlaskTest
+import jot
 import json
 import urllib
 import urlparse
@@ -72,6 +73,9 @@ class PostTokens(BaseFlaskTest):
             'redirect_uri': self.authorize_args['redirect_uri'],
         })
 
+    def _get_response_data(self, response):
+        return json.loads(response.data)
+
     def test_should_return_401_with_bad_client_credentials(self):
         response = self.client.post('/v1/tokens', data=self.get_post_data(),
                 headers={
@@ -91,6 +95,34 @@ class PostTokens(BaseFlaskTest):
                 })
 
         self.assertEqual(response.status_code, 200)
+
+    def test_should_return_valid_access_token(self):
+        response = self.client.post('/v1/tokens', data=self.get_post_data(),
+                headers={
+                    'Authorization': self.basic_auth_header(self.client_id,
+                        self.client_secret),
+                    'Contet-Type': 'application/x-www-form-urlencoded',
+                })
+
+        data = self._get_response_data(response)
+        self.assertIn('access_token', data)
+
+    def test_should_return_valid_id_token(self):
+        response = self.client.post('/v1/tokens', data=self.get_post_data(),
+                headers={
+                    'Authorization': self.basic_auth_header(self.client_id,
+                        self.client_secret),
+                    'Contet-Type': 'application/x-www-form-urlencoded',
+                })
+
+        data = self._get_response_data(response)
+        self.assertIn('id_token', data)
+
+        id_token_jws = jot.deserialize(data['id_token'])
+        self.assertTrue(id_token_jws.verify_with(self.public_key))
+
+        id_token = id_token_jws.payload
+        self.assertTrue(id_token.is_valid)
 
     def test_should_return_401_with_invalid_redirect_uri(self):
         post_data = urllib.urlencode({

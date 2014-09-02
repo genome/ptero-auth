@@ -2,6 +2,7 @@ from oauthlib.oauth2.rfc6749.tokens import BearerToken
 import hashlib
 import jot
 import jot.codec
+import datetime
 import time
 
 
@@ -25,7 +26,7 @@ class OIDCTokenHandler(BearerToken):
         # in the database and fetch the client objects from the
         # request_validator, then get their public keys.
 
-        iat = int(time.time())
+        iat = int(time.mktime(datetime.datetime.utcnow().timetuple()))
         exp = iat + 600
         id_token = jot.Token(claims={
             'iss': 'https://auth.ptero.gsc.wustl.edu',
