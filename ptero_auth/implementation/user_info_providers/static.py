@@ -1,4 +1,5 @@
 from .base import BaseUserInfoProvider
+from ptero_auth.utils import safe_compare
 
 
 class StaticUserInfoProvider(BaseUserInfoProvider):
@@ -15,4 +16,5 @@ class StaticUserInfoProvider(BaseUserInfoProvider):
         return result
 
     def validate_password(self, user, password):
-        return self.data.get('passwords', {}).get(user.name) == password
+        correct_password = self.data.get('passwords', {}).get(user.name)
+        return safe_compare(correct_password, password)
