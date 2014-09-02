@@ -34,8 +34,6 @@ class Client(Base):
     deactivated_by_pk = Column(Integer, ForeignKey('user.user_pk'))
     deactivated_by = relationship('User', foreign_keys=[deactivated_by_pk])
 
-    redirect_uri_regex = Column(Text, nullable=False)
-
     allowed_scopes = relationship('Scope', secondary='allowed_scope_bridge')
     default_scopes = relationship('Scope', secondary='default_scope_bridge')
 
@@ -49,8 +47,8 @@ class Client(Base):
     def requires_authentication(self):  # pragma: no cover
         return NotImplemented
 
-    def is_valid_redirect_uri(self, redirect_uri):
-        return re.match(self.redirect_uri_regex, redirect_uri)
+    def is_valid_redirect_uri(self, redirect_uri):  # pragma: no cover
+        return NotImplemented
 
     def is_valid_scope_set(self, scope_set):
         return scope_set.issubset(self.allowed_scope_set)
@@ -74,17 +72,21 @@ class Client(Base):
             'created_by': self.created_by.name,
             'default_scopes': sorted([s.value for s in self.default_scopes]),
             'name': self.client_name,
-            'redirect_uri_regex': self.redirect_uri_regex,
             'type': self.client_type,
         }
 
 
 class ConfidentialClient(Client):
+    __tablename__ = 'confidential_client'
     __mapper_args__ = {
         'polymorphic_identity': 'confidential',
     }
 
+    client_pk = Column(Integer, ForeignKey('client.client_pk'),
+            primary_key=True)
     client_secret = Column(Text, default=lambda: generate_id('cs'))
+
+    redirect_uri_regex = Column(Text, nullable=False)
 
     @property
     def requires_authentication(self):
@@ -104,11 +106,23 @@ class ConfidentialClient(Client):
     def is_valid_response_type(self, response_type):
         return response_type == 'code'
 
+    def is_valid_redirect_uri(self, redirect_uri):
+        return re.match(self.redirect_uri_regex, redirect_uri)
+
+    @property
+    def as_dict(self):
+        result = super(ConfidentialClient, self).as_dict
+        result['redirect_uri_regex'] = self.redirect_uri_regex
+        return result
 
 class PublicClient(Client):
+    __tablename__ = 'public_client'
     __mapper_args__ = {
         'polymorphic_identity': 'public',
     }
+
+    client_pk = Column(Integer, ForeignKey('client.client_pk'),
+            primary_key=True)
 
     @property
     def requires_authentication(self):
@@ -116,6 +130,9 @@ class PublicClient(Client):
 
     def authenticate(self, client_secret=None):
         return self.active
+
+    def is_valid_redirect_uri(self, redirect_uri):
+        return redirect_uri == None
 
     def is_valid_grant_type(self, grant_type):
         # XXX This should probably raise an exception.
@@ -134,6 +151,9 @@ _CLIENT_TYPES = {
     'confidential': ConfidentialClient,
     'public': PublicClient,
 }
-def create_client(client_type=None, **kwargs):
+def create_client(client_type=None, redirect_uri_regex=None, **kwargs):
     cls = _CLIENT_TYPES[client_type]
-    return cls(**kwargs)
+    client = cls(**kwargs)
+    if client_type == 'confidential':
+        client.redirect_uri_regex = redirect_uri_regex
+    return client

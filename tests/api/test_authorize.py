@@ -22,7 +22,6 @@ class GetAuthorizeBase(BaseFlaskTest):
     VALID_PUBLIC_CLIENT = {
         'type': 'public',
         'name': 'ptero user agent v1.2',
-        'redirect_uri_regex': r'^http://localhost.*',
         'allowed_scopes': ['foo', 'baz'],
         'default_scopes': ['foo'],
     }
@@ -33,7 +32,7 @@ class GetAuthorizeBase(BaseFlaskTest):
         self.confidential_client_data = self.register_client('alice', 'apass',
                 **self.VALID_CONFIDENTIAL_CLIENT)
 
-        self.confidential_redirect_uri = ('http://localhost:%d/resource1/asdf'
+        self.redirect_uri = ('http://localhost:%d/resource1/asdf'
                 % CONFIDENTIAL_CLIENT_PORT)
 
         self.public_client_data = self.register_client('alice', 'apass',
@@ -42,7 +41,6 @@ class GetAuthorizeBase(BaseFlaskTest):
     def public_authorize_url(self, scopes=None, **kwargs):
         args = {
             'client_id': self.public_client_data['client_id'],
-            'redirect_uri': self.confidential_redirect_uri,
             'response_type': 'id_token token',
             'state': 'OPAQUE VALUE FOR PREVENTING FORGERY ATTACKS',
         }
@@ -53,7 +51,7 @@ class GetAuthorizeBase(BaseFlaskTest):
     def confidential_authorize_url(self, scopes=None, **kwargs):
         args = {
             'client_id': self.confidential_client_data['client_id'],
-            'redirect_uri': self.confidential_redirect_uri,
+            'redirect_uri': self.redirect_uri,
             'response_type': 'code',
             'state': 'OPAQUE VALUE FOR PREVENTING FORGERY ATTACKS',
         }
@@ -109,7 +107,7 @@ class GetAuthorizeCodeFlow(GetAuthorizeBase):
 
         url, rest = response.headers['Location'].split('?')
 
-        self.assertIn(url, self.confidential_redirect_uri)
+        self.assertIn(url, self.redirect_uri)
 
 
 class GetAuthorizeImplicitFlow(GetAuthorizeBase):

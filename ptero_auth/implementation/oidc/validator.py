@@ -80,3 +80,6 @@ class OIDCRequestValidator(RequestValidator):
         self.session.query(models.AuthorizationCodeGrant
                 ).filter_by(code=code).delete()
         self.session.commit()
+
+    def get_default_redirect_uri(self, client_id, request):
+        return 'http://error.com/bad/library'
