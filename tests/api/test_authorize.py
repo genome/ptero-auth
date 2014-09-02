@@ -19,27 +19,49 @@ class GetAuthorizeBase(BaseFlaskTest):
         'audience_for': ['bar'],
     }
 
+    VALID_PUBLIC_CLIENT = {
+        'type': 'public',
+        'name': 'ptero user agent v1.2',
+        'redirect_uri_regex': r'^http://localhost.*',
+        'allowed_scopes': ['foo', 'baz'],
+        'default_scopes': ['foo'],
+    }
+
     def setUp(self):
         super(GetAuthorizeBase, self).setUp()
         self.bob_key = self.create_api_key('bob', 'foobob')
-        self.valid_client_data = self.register_client('alice', 'apass',
+        self.confidential_client_data = self.register_client('alice', 'apass',
                 **self.VALID_CONFIDENTIAL_CLIENT)
 
-        self.redirect_uri = ('http://localhost:%d/resource1/asdf'
+        self.confidential_redirect_uri = ('http://localhost:%d/resource1/asdf'
                 % CONFIDENTIAL_CLIENT_PORT)
 
-    def authorize_url(self, response_type='code', redirect_uri=None,
-            scopes=None):
-        if redirect_uri is None:
-            redirect_uri = self.redirect_uri
+        self.public_client_data = self.register_client('alice', 'apass',
+                **self.VALID_PUBLIC_CLIENT)
 
+    def public_authorize_url(self, scopes=None, **kwargs):
         args = {
-            'client_id': self.valid_client_data['client_id'],
-            'response_type': response_type,
-            'redirect_uri': redirect_uri,
+            'client_id': self.public_client_data['client_id'],
+            'redirect_uri': self.confidential_redirect_uri,
+            'response_type': 'id_token token',
             'state': 'OPAQUE VALUE FOR PREVENTING FORGERY ATTACKS',
         }
 
+        args.update(kwargs)
+        return self._root_authorize_url(args, scopes)
+
+    def confidential_authorize_url(self, scopes=None, **kwargs):
+        args = {
+            'client_id': self.confidential_client_data['client_id'],
+            'redirect_uri': self.confidential_redirect_uri,
+            'response_type': 'code',
+            'state': 'OPAQUE VALUE FOR PREVENTING FORGERY ATTACKS',
+        }
+
+        args.update(kwargs)
+        return self._root_authorize_url(args, scopes)
+
+    def _root_authorize_url(self, args, scopes=None):
         if scopes:
             args['scope'] = ' '.join(scopes)
 
@@ -60,20 +82,20 @@ class GetAuthorizeGeneral(GetAuthorizeBase):
 
 class GetAuthorizeCodeFlow(GetAuthorizeBase):
     def test_should_return_400_with_invalid_redirect_uri(self):
-        response = self.client.get(self.authorize_url(
+        response = self.client.get(self.confidential_authorize_url(
                 redirect_uri='http://localhost:12000/something/invalid'),
             headers={'Authorization': 'API-Key ' + self.bob_key})
 
         self.assertEqual(response.status_code, 400)
 
     def test_should_return_302_with_api_key(self):
-        response = self.client.get(self.authorize_url(),
+        response = self.client.get(self.confidential_authorize_url(),
                 headers={'Authorization': 'API-Key ' + self.bob_key})
 
         self.assertEqual(response.status_code, 302)
 
     def test_should_redirect_with_authorization_code(self):
-        response = self.client.get(self.authorize_url(),
+        response = self.client.get(self.confidential_authorize_url(),
                 headers={'Authorization': 'API-Key ' + self.bob_key})
 
         url = urlparse.urlparse(response.headers['Location'])
@@ -82,9 +104,32 @@ class GetAuthorizeCodeFlow(GetAuthorizeBase):
         self.assertIn('code', args)
 
     def test_should_redirect_to_redirect_uri(self):
-        response = self.client.get(self.authorize_url(),
+        response = self.client.get(self.confidential_authorize_url(),
                 headers={'Authorization': 'API-Key ' + self.bob_key})
 
         url, rest = response.headers['Location'].split('?')
 
-        self.assertIn(url, self.redirect_uri)
+        self.assertIn(url, self.confidential_redirect_uri)
+
+
+class GetAuthorizeImplicitFlow(GetAuthorizeBase):
+    def _get_frament_data(self, response):
+        redirect_uri = response.headers['Location']
+        urlobj = urlparse.urlparse(redirect_uri)
+        return urlparse.parse_qs(urlobj.fragment)
+
+    def test_should_return_302_with_api_key(self):
+        response = self.client.get(self.public_authorize_url(),
+                headers={'Authorization': 'API-Key ' + self.bob_key})
+
+        self.assertEqual(response.status_code, 302)
+
+    def test_should_return_access_token(self):
+        response = self.client.get(self.public_authorize_url(),
+                headers={'Authorization': 'API-Key ' + self.bob_key})
+
+        fragment_data = self._get_frament_data(response)
+
+        self.assertIn('access_token', fragment_data)
+        self.assertIn('expires_in', fragment_data)
+        self.assertEqual(['Bearer'], fragment_data['token_type'])
