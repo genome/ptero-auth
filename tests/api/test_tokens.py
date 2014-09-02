@@ -104,3 +104,20 @@ class PostTokens(BaseFlaskTest):
                     'Contet-Type': 'application/x-www-form-urlencoded',
                 })
         self.assertEqual(response.status_code, 401)
+
+    def test_should_return_401_with_repeat_code(self):
+        post_data = self.get_post_data()
+        response1 = self.client.post('/v1/tokens', data=post_data,
+                headers={
+                    'Authorization': self.basic_auth_header(self.client_id,
+                        self.client_secret),
+                    'Contet-Type': 'application/x-www-form-urlencoded',
+                })
+
+        response2 = self.client.post('/v1/tokens', data=post_data,
+                headers={
+                    'Authorization': self.basic_auth_header(self.client_id,
+                        self.client_secret),
+                    'Contet-Type': 'application/x-www-form-urlencoded',
+                })
+        self.assertEqual(response2.status_code, 401)

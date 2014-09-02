@@ -103,5 +103,6 @@ class OIDCRequestValidator(RequestValidator):
             self.session.commit()
 
     def invalidate_authorization_code(self, client_id, code, request):
-        # XXX Should flag the code as inactive/invalid
-        pass
+        self.session.query(models.AuthorizationCodeGrant
+                ).filter_by(code=code).delete()
+        self.session.commit()
