@@ -1,4 +1,5 @@
 from . import common
+from oauthlib.oauth2.rfc6749 import errors as oal_errors
 from ptero_auth import exceptions
 from flask import g, request
 from flask.ext.restful import Resource
@@ -25,9 +26,13 @@ class AuthorizeView(Resource):
 
         scopes = self._get_scopes()
 
-        header, body, status_code = g.backend.oidc_server.create_authorization_response(
-                uri=request.url, headers=request.headers, scopes=scopes,
-                credentials={'user': user})
+        try:
+            header, body, status_code =\
+                    g.backend.oidc_server.create_authorization_response(
+                            uri=request.url, headers=request.headers,
+                            scopes=scopes, credentials={'user': user})
+        except oal_errors.FatalClientError:
+            return None, 400
 
         return body, status_code, header
 

@@ -4,9 +4,6 @@ from ptero_auth.utils import safe_compare
 
 
 class OIDCRequestValidator(RequestValidator):
-    # XXX Some of these methods are supposed to modify the request, attaching
-    #     data like user or client.
-
     def __init__(self, session):
         self.session = session
 
@@ -14,35 +11,23 @@ class OIDCRequestValidator(RequestValidator):
         return self.session.query(models.Client
                 ).filter_by(client_id=client_id).first()
 
-    def _get_key(self, request):
-        return self.session.query(models.Key
-                ).filter_by(key=request.headers['Authorization'][8:]).one()
-
     def validate_client_id(self, client_id, request):
         request.client = self._get_client(client_id)
         return request.client is not None
 
     def validate_redirect_uri(self, client_id, redirect_uri, request):
-        # XXX Needed
-        # Is the client allowed to use the supplied redirect_uri? i.e. has
-        # the client previously registered this EXACT redirect uri.
-        return True
+        return request.client.is_valid_redirect_uri(redirect_uri)
 
     def validate_scopes(self, client_id, scopes, client, request):
-        c = self._get_client(client_id)
-
-        return c.is_valid_scope_set(set(scopes))
-
-    def get_default_scopes(self, client_id, request):
-        return self._get_client(client_id).default_scopes
+        return client.is_valid_scope_set(set(scopes))
 
     def validate_response_type(self, client_id, response_type, client, request):
-        c = self._get_client(client_id)
-        return c.is_valid_response_type(response_type)
+        return client.is_valid_response_type(response_type)
 
     def save_authorization_code(self, client_id, code, request):
         ac = models.AuthorizationCodeGrant(code=code['code'],
-                user=request.user, client=self._get_client(client_id))
+                user=request.user, client=request.client,
+                redirect_uri=request.redirect_uri)
         ac.scopes = self.session.query(models.Scope
                 ).filter(models.Scope.value.in_(request.scopes)).all()
         self.session.add(ac)
@@ -53,24 +38,14 @@ class OIDCRequestValidator(RequestValidator):
         return request.client.requires_authentication
 
     def _get_client_id(self, request):
-        if request.client_id:
-            return request.client_id
-
-        else:
-            auth = request.extra_credentials.get('flask-auth')
-            if auth and hasattr(auth, 'username'):
-                request.client_id = auth.username
-                return auth.username
+        auth = request.extra_credentials.get('flask-auth')
+        if auth and hasattr(auth, 'username'):
+            return auth.username
 
     def _get_client_secret(self, request):
-        if request.client_secret:
-            return request.client_secret
-
-        else:
-            auth = request.extra_credentials.get('flask-auth')
-            if auth and hasattr(auth, 'password'):
-                request.client_secret = auth.password
-                return auth.password
+        auth = request.extra_credentials.get('flask-auth')
+        if auth and hasattr(auth, 'password'):
+            return auth.password
 
     def authenticate_client(self, request):
         return request.client.authenticate(self._get_client_secret(request))
@@ -89,8 +64,10 @@ class OIDCRequestValidator(RequestValidator):
             return False
 
     def confirm_redirect_uri(self, client_id, code, redirect_uri, client):
-        # XXX Should be picky, maybe each client registers a regex?
-        return True
+        ac = self.session.query(models.AuthorizationCodeGrant).filter_by(
+                code=code, client=client).first()
+        if ac:
+            return ac.redirect_uri == redirect_uri
 
     def save_bearer_token(self, token, request):
         if 'refresh_token' in token:
@@ -100,5 +77,6 @@ class OIDCRequestValidator(RequestValidator):
             self.session.commit()
 
     def invalidate_authorization_code(self, client_id, code, request):
-        # XXX Should flag the code as inactive/invalid
-        pass
+        self.session.query(models.AuthorizationCodeGrant
+                ).filter_by(code=code).delete()
+        self.session.commit()

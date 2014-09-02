@@ -25,3 +25,5 @@ class AuthorizationCodeGrant(Base):
 
     code = Column(Text, index=True, nullable=False, unique=True,
             default=lambda: generate_id('ac'))
+
+    redirect_uri = Column(Text, nullable=False)
