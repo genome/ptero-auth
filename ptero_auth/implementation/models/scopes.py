@@ -32,14 +32,6 @@ default_scope_table = Table('default_scope_bridge', Base.metadata,
 )
 
 
-scope_audience_table = Table('scope_audience_bridge', Base.metadata,
-    Column('client_pk', Integer, ForeignKey('client.client_pk',
-        ondelete='CASCADE')),
-    Column('scope_pk', Integer, ForeignKey('scope.scope_pk',
-        ondelete='CASCADE')),
-    PrimaryKeyConstraint('client_pk', 'scope_pk')
-)
-
 grant_scope_table = Table('grant_scope_bridge', Base.metadata,
     Column('grant_pk', Integer, ForeignKey('authorization_code_grant.grant_pk',
         ondelete='CASCADE')),

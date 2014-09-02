@@ -16,7 +16,7 @@ class GetAuthorize(BaseFlaskTest):
             + r'/(resource1)|(resource2)/?(\?.+)?$',
         'allowed_scopes': ['foo', 'bar', 'baz'],
         'default_scopes': ['bar', 'baz'],
-        'audience_for': ['bar'],
+        'audience_for': 'bar',
     }
 
     def setUp(self):

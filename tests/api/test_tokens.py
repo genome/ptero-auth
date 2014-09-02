@@ -16,7 +16,7 @@ class PostTokens(BaseFlaskTest):
             + r'/(resource1)|(resource2)/?(\?.+)?$',
         'allowed_scopes': ['foo', 'bar', 'baz', 'openid'],
         'default_scopes': ['bar', 'baz', 'openid'],
-        'audience_for': ['bar'],
+        'audience_for': 'bar',
     }
 
     def setUp(self):
