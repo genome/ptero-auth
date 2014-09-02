@@ -40,13 +40,11 @@ class OIDCRequestValidator(RequestValidator):
     def _get_client_id(self, request):
         auth = request.extra_credentials.get('flask-auth')
         if auth and hasattr(auth, 'username'):
-            request.client_id = auth.username
             return auth.username
 
     def _get_client_secret(self, request):
         auth = request.extra_credentials.get('flask-auth')
         if auth and hasattr(auth, 'password'):
-            request.client_secret = auth.password
             return auth.password
 
     def authenticate_client(self, request):
