@@ -7,7 +7,7 @@ import urlparse
 CONFIDENTIAL_CLIENT_PORT = 8008
 
 
-class GetAuthorize(BaseFlaskTest):
+class GetAuthorizeBase(BaseFlaskTest):
     VALID_CONFIDENTIAL_CLIENT = {
         'type': 'confidential',
         'name': 'widget maker v1.1',
@@ -20,7 +20,7 @@ class GetAuthorize(BaseFlaskTest):
     }
 
     def setUp(self):
-        super(GetAuthorize, self).setUp()
+        super(GetAuthorizeBase, self).setUp()
         self.bob_key = self.create_api_key('bob', 'foobob')
         self.valid_client_data = self.register_client('alice', 'apass',
                 **self.VALID_CONFIDENTIAL_CLIENT)
@@ -45,22 +45,26 @@ class GetAuthorize(BaseFlaskTest):
 
         return '/v1/authorize?' + urllib.urlencode(args)
 
+
+class GetAuthorizeGeneral(GetAuthorizeBase):
     def test_should_return_401_with_no_api_key(self):
         response = self.client.get('/v1/authorize')
 
         self.assertEqual(response.status_code, 401)
 
+    def test_should_return_www_authenticate_header_with_no_api_key(self):
+        response = self.client.get('/v1/authorize')
+
+        self.assertEqual(response.headers['WWW-Authenticate'], 'API-Key')
+
+
+class GetAuthorizeCodeFlow(GetAuthorizeBase):
     def test_should_return_400_with_invalid_redirect_uri(self):
         response = self.client.get(self.authorize_url(
                 redirect_uri='http://localhost:12000/something/invalid'),
             headers={'Authorization': 'API-Key ' + self.bob_key})
 
         self.assertEqual(response.status_code, 400)
-
-    def test_should_return_www_authenticate_header_with_no_api_key(self):
-        response = self.client.get('/v1/authorize')
-
-        self.assertEqual(response.headers['WWW-Authenticate'], 'API-Key')
 
     def test_should_return_302_with_api_key(self):
         response = self.client.get(self.authorize_url(),
