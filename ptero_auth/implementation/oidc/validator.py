@@ -19,10 +19,10 @@ class OIDCRequestValidator(RequestValidator):
         return request.client.is_valid_redirect_uri(redirect_uri)
 
     def validate_scopes(self, client_id, scopes, client, request):
-        return request.client.is_valid_scope_set(set(scopes))
+        return client.is_valid_scope_set(set(scopes))
 
     def validate_response_type(self, client_id, response_type, client, request):
-        return request.client.is_valid_response_type(response_type)
+        return client.is_valid_response_type(response_type)
 
     def save_authorization_code(self, client_id, code, request):
         ac = models.AuthorizationCodeGrant(code=code['code'],
