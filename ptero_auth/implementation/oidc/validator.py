@@ -4,9 +4,6 @@ from ptero_auth.utils import safe_compare
 
 
 class OIDCRequestValidator(RequestValidator):
-    # XXX Some of these methods are supposed to modify the request, attaching
-    #     data like user or client.
-
     def __init__(self, session):
         self.session = session
 
