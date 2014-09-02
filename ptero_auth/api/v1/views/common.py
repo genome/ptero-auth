@@ -1,2 +1,8 @@
-def require_authorization():
-    return '', 401, {'WWW-Authenticate': 'API-Key'}
+from flask import request
+
+
+def require_authorization(method='Basic realm="ptero"'):
+    return '', 401, {
+        'WWW-Authenticate': method,
+        'Location': request.url,
+    }

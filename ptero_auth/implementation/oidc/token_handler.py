@@ -25,18 +25,16 @@ class OIDCTokenHandler(BearerToken):
         # in the database and fetch the client objects from the
         # request_validator, then get their public keys.
 
-        user = self.request_validator.get_user(request)
-
         iat = int(time.time())
         exp = iat + 600
         id_token = jot.Token(claims={
             'iss': 'https://auth.ptero.gsc.wustl.edu',
-            'sub': user.oidc_sub,
+            'sub': request.user.oidc_sub,
             'aud': request.client_id,
             'exp': exp,
             'iat': iat,
             'at_hash': self._at_hash(bearer_token['access_token']),
-            'user_details': user.details
+#            'user_details': request.user.details
         })
 
         jws = id_token.sign_with(self.signature_key, alg=self.signature_alg,
@@ -50,8 +48,8 @@ class OIDCTokenHandler(BearerToken):
         return jws.compact_serialize()
 
     def create_token(self, request, refresh_token=False):
-        token = super(OIDCToken, self).create_token(request, refresh_token)
-        if 'openid' in self.request_validator.get_scopes(request):
+        token = super(OIDCTokenHandler, self).create_token(request, refresh_token)
+        if 'openid' in request.scopes:
             token['id_token'] = self.create_id_token(request, token)
         return token
 

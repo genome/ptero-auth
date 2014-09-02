@@ -23,6 +23,11 @@ class Backend(object):
                 authorization.password):
             return user
 
+    def get_user_from_api_key(self, api_key):
+        key = self.session.query(models.Key).filter_by(key=api_key).first()
+        if key:
+            return key.user
+
     def create_api_key_for_user(self, user):
         key = models.Key(user=user)
         self.session.add(key)
@@ -55,7 +60,7 @@ class Backend(object):
         assert default_scopes.issubset(allowed_scopes)
         assert audience_for.issubset(allowed_scopes)
 
-        client = models.Client(
+        client = models.create_client(
                 client_name=client_data['name'],
                 client_type=client_data['type'],
                 created_by=user,
@@ -68,7 +73,12 @@ class Backend(object):
         self.session.add(client)
         self.session.commit()
 
-        return client.as_dict
+        result = client.as_dict
+
+        if client.client_type == 'confidential':
+            result['client_secret'] = client.client_secret
+
+        return result
 
     def _create_or_get_scopes(self, scope_values):
         result = {}

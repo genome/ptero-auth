@@ -1,7 +1,6 @@
 from .base import BaseFlaskTest
 import json
 import re
-import unittest
 
 
 class PostApiKeyList(BaseFlaskTest):
@@ -18,7 +17,8 @@ class PostApiKeyList(BaseFlaskTest):
     def test_should_set_www_authenticate_header_with_invalid_user(self):
         response = self.post_api_key('baduser', 'badpass')
 
-        self.assertEqual(response.headers['WWW-Authenticate'], 'API-Key')
+        self.assertEqual(response.headers['WWW-Authenticate'],
+                'Basic realm="ptero"')
 
     def test_should_return_401_with_invalid_password(self):
         response = self.post_api_key('alice', 'badpass')
@@ -28,7 +28,8 @@ class PostApiKeyList(BaseFlaskTest):
     def test_should_set_www_authenticate_header_with_invalid_password(self):
         response = self.post_api_key('alice', 'badpass')
 
-        self.assertEqual(response.headers['WWW-Authenticate'], 'API-Key')
+        self.assertEqual(response.headers['WWW-Authenticate'],
+                'Basic realm="ptero"')
 
     def test_should_return_201(self):
         response = self.post_api_key('alice', 'apass')
@@ -37,7 +38,7 @@ class PostApiKeyList(BaseFlaskTest):
     def test_should_set_location_header(self):
         response = self.post_api_key('alice', 'apass')
         self.assertTrue(re.search(
-            r'^http://localhost[:\d+]?/v1/api-keys/\w+:k$',
+            r'^http://localhost[:\d+]?/v1/api-keys/\w+-k$',
             response.headers['Location']))
 
     def test_should_return_valid_api_key(self):
@@ -46,7 +47,7 @@ class PostApiKeyList(BaseFlaskTest):
         data = json.loads(post_response.data)
         self.assertIn('api-key', data)
         api_key = data['api-key']
-        self.assertTrue(re.search(r'\w+:k', api_key))
+        self.assertTrue(re.search(r'\w+-k', api_key))
 
         get_response = self.client.get('/v1/api-keys/%s' % api_key, headers={
             'Authorization': self.basic_auth_header('alice', 'apass'),

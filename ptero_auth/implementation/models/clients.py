@@ -8,7 +8,7 @@ import re
 import time
 
 
-__all__ = ['Client', 'ConfidentialClient', 'PublicClient']
+__all__ = ['Client', 'ConfidentialClient', 'PublicClient', 'create_client']
 
 
 class Client(Base):
@@ -42,7 +42,11 @@ class Client(Base):
     audience_for = relationship('Scope', secondary='scope_audience_bridge',
             backref='audience')
 
-    def authenticate(self, client_id, client_secret=None):
+    def authenticate(self, client_secret=None):  # pragma: no cover
+        return NotImplemented
+
+    @property
+    def requires_authentication(self):  # pragma: no cover
         return NotImplemented
 
     def is_valid_redirect_uri(self, redirect_uri):
@@ -82,10 +86,12 @@ class ConfidentialClient(Client):
 
     client_secret = Column(Text, default=lambda: generate_id('cs'))
 
-    def authenticate(self, client_id, client_secret=None):
-        return (self.active
-                and safe_compare(self.client_id, client_id)
-                and safe_compare(self.client_secret, client_secret))
+    @property
+    def requires_authentication(self):
+        return True
+
+    def authenticate(self, client_secret=None):
+        return (self.active and safe_compare(self.client_secret, client_secret))
 
     _VALID_GRANT_TYPES = set([
         'authorization_code',
@@ -104,7 +110,11 @@ class PublicClient(Client):
         'polymorphic_identity': 'public',
     }
 
-    def authenticate(self, client_id, client_secret=None):
+    @property
+    def requires_authentication(self):
+        return False
+
+    def authenticate(self, client_secret=None):
         return self.active
 
     def is_valid_grant_type(self, grant_type):
@@ -118,3 +128,12 @@ class PublicClient(Client):
     ])
     def is_valid_response_type(self, response_type):
         return response_type in self._VALID_RESPONSE_TYPES
+
+
+_CLIENT_TYPES = {
+    'confidential': ConfidentialClient,
+    'public': PublicClient,
+}
+def create_client(client_type=None, **kwargs):
+    cls = _CLIENT_TYPES[client_type]
+    return cls(**kwargs)

@@ -9,7 +9,7 @@ api = Api(default_mediatype='application/json')
 
 # OAuth 2.0 Endpoints
 api.add_resource(views.AuthorizeView, '/authorize', endpoint='authorize')
-api.add_resource(views.TokenView, '/token', endpoint='token')
+api.add_resource(views.TokenView, '/tokens', endpoint='tokens')
 
 # Application-specific endpoints
 api.add_resource(views.ApiKeyListView, '/api-keys', endpoint='api-key-list')

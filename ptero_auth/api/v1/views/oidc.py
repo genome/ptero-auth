@@ -1,3 +1,4 @@
+from . import common
 from ptero_auth import exceptions
 from flask import g, request
 from flask.ext.restful import Resource
@@ -13,47 +14,47 @@ LOG = logging.getLogger(__file__)
 
 class AuthorizeView(Resource):
     def get(self):
-        return self._unauthorized_response()
-
-    def post(self):
         try:
             api_key = self._get_api_key()
         except exceptions.NoApiKey:
-            return self._unauthorized_response()
+            return common.require_authorization('API-Key')
+
+        user = g.backend.get_user_from_api_key(api_key)
+        if not user:
+            return None, 403
 
         scopes = self._get_scopes()
 
-        return g.oidc_server.create_authorization_response(uri=request.url,
-                headers=request.headers, scopes=scopes,
-                credentials={'api_key': api_key})
+        header, body, status_code = g.backend.oidc_server.create_authorization_response(
+                uri=request.url, headers=request.headers, scopes=scopes,
+                credentials={'user': user})
 
-    def _unauthorized_response(self):
-        # XXX Make sure to set the 'WWW-Authenticate' header based on oidc
-        # interaction settings (e.g. none, only add a WWW-Authenitcate header
-        # for api keys).
-        return '', 401, {'Location': request.url}
+        return body, status_code, header
 
     def _get_api_key(self):
-        authorization = request.headers['Authorization']
-        if not authorization or not authorization.startswith('Bearer '):
+        authorization = request.headers.get('Authorization')
+        if not authorization or not authorization.startswith('API-Key '):
             raise exceptions.NoApiKey()
 
         return authorization[8:]
 
     def _get_scopes(self):
-        scope = request.args['scope']
+        scope = request.args.get('scope')
         if not scope:
-            return []
+            return self._get_default_scopes()
 
         else:
             return scope.split(' ')
 
+    def _get_default_scopes(self):
+        client = g.backend.get_client(request.args.get('client_id'))
+        return client['default_scopes']
+
 
 class TokenView(Resource):
     def post(self):
-        regenerated_body = urllib.urlencode(request.form)
+        header, body, status_code = g.backend.oidc_server.create_token_response(
+                uri=request.url, headers=request.headers, body=request.data,
+                credentials={'flask-auth': request.authorization})
 
-        headers, body, status_code = g.oidc_server.create_token_response(
-                uri=request.url, headers=request.headers, body=regenerated_body)
-
-        return body, status_code, headers
+        return body, status_code, header
