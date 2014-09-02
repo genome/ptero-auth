@@ -39,7 +39,8 @@ class OIDCRequestValidator(RequestValidator):
 
     def save_authorization_code(self, client_id, code, request):
         ac = models.AuthorizationCodeGrant(code=code['code'],
-                user=request.user, client=self._get_client(client_id))
+                user=request.user, client=self._get_client(client_id),
+                redirect_uri=request.redirect_uri)
         ac.scopes = self.session.query(models.Scope
                 ).filter(models.Scope.value.in_(request.scopes)).all()
         self.session.add(ac)
@@ -86,8 +87,13 @@ class OIDCRequestValidator(RequestValidator):
             return False
 
     def confirm_redirect_uri(self, client_id, code, redirect_uri, client):
-        # XXX Should be picky, maybe each client registers a regex?
-        return True
+        ac = self.session.query(models.AuthorizationCodeGrant).filter_by(
+                code=code, client=client).first()
+        if ac:
+            return ac.redirect_uri == redirect_uri
+
+        else:
+            return False
 
     def save_bearer_token(self, token, request):
         if 'refresh_token' in token:
