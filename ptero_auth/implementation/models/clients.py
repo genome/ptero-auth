@@ -64,10 +64,9 @@ class Client(Base):
 
     @property
     def as_dict(self):
-        return {
+        result = {
             'active': self.active,
             'allowed_scopes': sorted([s.value for s in self.allowed_scopes]),
-            'audience_for': self.audience_for.value,
             'client_id': self.client_id,
             'created_at': int(time.mktime(self.created_at.utctimetuple())),
             'created_by': self.created_by.name,
@@ -75,6 +74,11 @@ class Client(Base):
             'name': self.client_name,
             'type': self.client_type,
         }
+
+        if self.audience_for:
+            result['audience_for'] = self.audience_for.value
+
+        return result
 
 
 class ConfidentialClient(Client):
