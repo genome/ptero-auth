@@ -123,3 +123,12 @@ class GetAuthorizeImplicitFlow(GetAuthorizeBase):
         self.assertIn('access_token', fragment_data)
         self.assertIn('expires_in', fragment_data)
         self.assertEqual(['Bearer'], fragment_data['token_type'])
+
+    def test_should_error_with_three_scopes(self):
+        response = self.client.get(self.public_authorize_url(
+            scopes=['openid', 'bar', 'baz']),
+            headers={'Authorization': 'API-Key ' + self.bob_key})
+
+        fragment_data = self._get_frament_data(response)
+
+        self.assertIn('error', fragment_data)
