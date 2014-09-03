@@ -96,32 +96,41 @@ class PublicClient(object):
     def __init__(self, client_id, session):
         self.client_id = client_id
         self.session = session
-        self.audience_scope = None
-        self.audience_client = None
+        self._audience_client = None
 
     def is_valid_scope_set(self, scopes):
         if len(scopes) not in (1, 2):
             return False
+
         if len(scopes) == 2:
             if 'openid' not in scopes:
                 return False
-            scopes.remove('openid')
-            self.use_openid = True
 
-        self.audience_scope = scopes.pop()
-        self.audience_client = self.session.query(ConfidentialClient
-                ).join(ConfidentialClient.audience_for
-                ).filter(Scope.value==self.audience_scope).first()
-
-        if not self.audience_client:
+        if not self._get_audience_client(scopes):
             return False
 
         return True
 
+    def _get_audience_client(self, scopes):
+        if not self._audience_client:
+            self._audience_client = self.session.query(ConfidentialClient
+                    ).join(ConfidentialClient.audience_for
+                    ).filter(Scope.value==self._get_audience_scope(scopes)
+                    ).first()
+        return self._audience_client
+
+    def _get_audience_scope(self, scopes):
+        s = set(scopes)
+        s.discard('openid')
+        if not s:
+            return
+        return s.pop()
+
     def is_valid_redirect_uri(self, redirect_uri, scopes):
-        if not self.is_valid_scope_set(set(scopes)):
+        ac = self._get_audience_client(scopes)
+        if not ac:
             return False
-        return self.audience_client.is_valid_redirect_uri(redirect_uri, scopes)
+        return ac.is_valid_redirect_uri(redirect_uri, scopes)
 
     _VALID_RESPONSE_TYPES = set([
         'token',
