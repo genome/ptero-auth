@@ -28,12 +28,15 @@ class GetAuthorizeBase(BaseFlaskTest):
         self.redirect_uri = ('http://localhost:%d/resource1/asdf'
                 % CONFIDENTIAL_CLIENT_PORT)
 
-    def public_authorize_url(self, scopes=None, **kwargs):
+    def public_authorize_url(self, redirect_uri=None, scopes=None, **kwargs):
         args = {
             'client_id': 'ARBITRARY TESTING CLIENT_ID',
             'response_type': 'id_token token',
             'state': 'OPAQUE VALUE FOR PREVENTING FORGERY ATTACKS',
         }
+
+        if redirect_uri:
+            args['redirect_uri'] = redirect_uri
 
         args.update(kwargs)
         return self._root_authorize_url(args, scopes)
@@ -150,3 +153,11 @@ class GetAuthorizeImplicitFlow(GetAuthorizeBase):
         fragment_data = self._get_frament_data(response)
 
         self.assertIn('error', fragment_data)
+
+    def test_should_error_with_unregistered_redirect_uri(self):
+        response = self.client.get(self.public_authorize_url(
+            redirect_uri='http://invalid.example.com/bad',
+            scopes=['bar', 'openid']),
+            headers={'Authorization': 'API-Key ' + self.bob_key})
+
+        self.assertEqual(response.status_code, 400)

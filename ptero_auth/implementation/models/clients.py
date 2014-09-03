@@ -86,7 +86,7 @@ class ConfidentialClient(Base):
     def is_valid_response_type(self, response_type):
         return response_type == 'code'
 
-    def is_valid_redirect_uri(self, redirect_uri):
+    def is_valid_redirect_uri(self, redirect_uri, scopes=None):
         return re.match(self.redirect_uri_regex, redirect_uri)
 
 
@@ -118,8 +118,10 @@ class PublicClient(object):
 
         return True
 
-    def is_valid_redirect_uri(self, redirect_uri):
-        return redirect_uri == None
+    def is_valid_redirect_uri(self, redirect_uri, scopes):
+        if not self.is_valid_scope_set(set(scopes)):
+            return False
+        return self.audience_client.is_valid_redirect_uri(redirect_uri, scopes)
 
     _VALID_RESPONSE_TYPES = set([
         'token',

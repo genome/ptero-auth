@@ -16,13 +16,13 @@ class OIDCRequestValidator(RequestValidator):
 
         return client
 
-
     def validate_client_id(self, client_id, request):
         request.client = self._get_client(client_id)
         return request.client is not None
 
     def validate_redirect_uri(self, client_id, redirect_uri, request):
-        return request.client.is_valid_redirect_uri(redirect_uri)
+        return request.client.is_valid_redirect_uri(redirect_uri,
+                request.scopes)
 
     def validate_scopes(self, client_id, scopes, client, request):
         return client.is_valid_scope_set(set(scopes))
