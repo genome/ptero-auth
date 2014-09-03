@@ -93,8 +93,7 @@ class ConfidentialClient(Base):
 class PublicClient(object):
     requires_authentication = False
 
-    def __init__(self, client_id, session, scopes):
-        self.client_id = client_id
+    def __init__(self, session, scopes):
         self.session = session
         self.scopes = scopes
         self._audience_client = None

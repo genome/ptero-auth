@@ -14,8 +14,8 @@ class OIDCRequestValidator(RequestValidator):
         client = self.session.query(models.ConfidentialClient
                 ).filter_by(client_id=client_id).first()
         if not client:
-            client = models.PublicClient(client_id=client_id,
-                    session=self.session, scopes=request.scopes)
+            client = models.PublicClient(session=self.session,
+                    scopes=request.scopes)
 
         return client
 
