@@ -8,7 +8,6 @@ CONFIDENTIAL_CLIENT_PORT = 8008
 
 class PostClientsList(BaseFlaskTest):
     VALID_CONFIDENTIAL_CLIENT = {
-        'type': 'confidential',
         'name': 'widget maker v1.1',
         'redirect_uri_regex': '^http://localhost:'
             + str(CONFIDENTIAL_CLIENT_PORT)

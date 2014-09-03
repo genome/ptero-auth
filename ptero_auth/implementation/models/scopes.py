@@ -15,7 +15,7 @@ class Scope(Base):
 
 
 allowed_scope_table = Table('allowed_scope_bridge', Base.metadata,
-    Column('client_pk', Integer, ForeignKey('client.client_pk',
+    Column('client_pk', Integer, ForeignKey('confidential_client.client_pk',
         ondelete='CASCADE')),
     Column('scope_pk', Integer, ForeignKey('scope.scope_pk',
         ondelete='CASCADE')),
@@ -24,7 +24,7 @@ allowed_scope_table = Table('allowed_scope_bridge', Base.metadata,
 
 
 default_scope_table = Table('default_scope_bridge', Base.metadata,
-    Column('client_pk', Integer, ForeignKey('client.client_pk',
+    Column('client_pk', Integer, ForeignKey('confidential_client.client_pk',
         ondelete='CASCADE')),
     Column('scope_pk', Integer, ForeignKey('scope.scope_pk',
         ondelete='CASCADE')),

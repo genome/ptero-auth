@@ -19,13 +19,6 @@ class GetAuthorizeBase(BaseFlaskTest):
         'audience_for': 'bar',
     }
 
-    VALID_PUBLIC_CLIENT = {
-        'type': 'public',
-        'name': 'ptero user agent v1.2',
-        'allowed_scopes': ['foo', 'baz'],
-        'default_scopes': ['foo'],
-    }
-
     def setUp(self):
         super(GetAuthorizeBase, self).setUp()
         self.bob_key = self.create_api_key('bob', 'foobob')
@@ -35,12 +28,9 @@ class GetAuthorizeBase(BaseFlaskTest):
         self.redirect_uri = ('http://localhost:%d/resource1/asdf'
                 % CONFIDENTIAL_CLIENT_PORT)
 
-        self.public_client_data = self.register_client('alice', 'apass',
-                **self.VALID_PUBLIC_CLIENT)
-
     def public_authorize_url(self, scopes=None, **kwargs):
         args = {
-            'client_id': self.public_client_data['client_id'],
+            'client_id': 'ARBITRARY TESTING CLIENT_ID',
             'response_type': 'id_token token',
             'state': 'OPAQUE VALUE FOR PREVENTING FORGERY ATTACKS',
         }
@@ -117,14 +107,16 @@ class GetAuthorizeImplicitFlow(GetAuthorizeBase):
         return urlparse.parse_qs(urlobj.fragment)
 
     def test_should_return_302_with_api_key(self):
-        response = self.client.get(self.public_authorize_url(),
-                headers={'Authorization': 'API-Key ' + self.bob_key})
+        response = self.client.get(self.public_authorize_url(
+            scopes=['openid', 'bar']),
+            headers={'Authorization': 'API-Key ' + self.bob_key})
 
         self.assertEqual(response.status_code, 302)
 
     def test_should_return_access_token(self):
-        response = self.client.get(self.public_authorize_url(),
-                headers={'Authorization': 'API-Key ' + self.bob_key})
+        response = self.client.get(self.public_authorize_url(
+            scopes=['openid', 'bar']),
+            headers={'Authorization': 'API-Key ' + self.bob_key})
 
         fragment_data = self._get_frament_data(response)
 

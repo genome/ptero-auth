@@ -58,9 +58,8 @@ class Backend(object):
 
         assert default_scopes.issubset(allowed_scopes)
 
-        client = models.create_client(
+        client = models.ConfidentialClient(
                 client_name=client_data['name'],
-                client_type=client_data['type'],
                 created_by=user,
                 redirect_uri_regex=client_data.get('redirect_uri_regex'),
                 allowed_scopes=[scope_dict[sv] for sv in allowed_scopes],
@@ -72,9 +71,7 @@ class Backend(object):
         self.session.commit()
 
         result = client.as_dict
-
-        if client.client_type == 'confidential':
-            result['client_secret'] = client.client_secret
+        result['client_secret'] = client.client_secret
 
         return result
 
@@ -104,7 +101,7 @@ class Backend(object):
         return result
 
     def get_client(self, client_id):
-        client = self.session.query(models.Client
+        client = self.session.query(models.ConfidentialClient
                 ).filter_by(client_id=client_id).first()
 
         if client:

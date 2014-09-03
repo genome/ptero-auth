@@ -1,4 +1,5 @@
 from .base import Base
+from .scopes import Scope
 from .util import generate_id
 from ptero_auth.utils import safe_compare
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text
@@ -8,20 +9,19 @@ import re
 import time
 
 
-__all__ = ['Client', 'ConfidentialClient', 'PublicClient', 'create_client']
+__all__ = ['ConfidentialClient', 'PublicClient']
 
 
-class Client(Base):
-    __tablename__ = 'client'
-    __mapper_args__ = {
-        'polymorphic_on': 'client_type',
-    }
+class ConfidentialClient(Base):
+    __tablename__ = 'confidential_client'
 
     client_pk = Column(Integer, primary_key=True)
     client_id = Column(Text, index=True, unique=True, nullable=False,
             default=lambda: generate_id('ci'))
     client_name = Column(Text, index=True)
-    client_type = Column(Text, index=True, nullable=False)
+    client_secret = Column(Text, default=lambda: generate_id('cs'))
+
+    redirect_uri_regex = Column(Text, nullable=False)
 
     active = Column(Boolean, index=True, default=True)
 
@@ -72,30 +72,13 @@ class Client(Base):
             'created_by': self.created_by.name,
             'default_scopes': sorted([s.value for s in self.default_scopes]),
             'name': self.client_name,
-            'type': self.client_type,
+            'redirect_uri_regex': self.redirect_uri_regex,
         }
 
         if self.audience_for:
             result['audience_for'] = self.audience_for.value
 
         return result
-
-
-class ConfidentialClient(Client):
-    __tablename__ = 'confidential_client'
-    __mapper_args__ = {
-        'polymorphic_identity': 'confidential',
-    }
-
-    client_pk = Column(Integer, ForeignKey('client.client_pk'),
-            primary_key=True)
-    client_secret = Column(Text, default=lambda: generate_id('cs'))
-
-    redirect_uri_regex = Column(Text, nullable=False)
-
-    @property
-    def requires_authentication(self):
-        return True
 
     def authenticate(self, client_secret=None):
         return (self.active and safe_compare(self.client_secret, client_secret))
@@ -114,34 +97,35 @@ class ConfidentialClient(Client):
     def is_valid_redirect_uri(self, redirect_uri):
         return re.match(self.redirect_uri_regex, redirect_uri)
 
-    @property
-    def as_dict(self):
-        result = super(ConfidentialClient, self).as_dict
-        result['redirect_uri_regex'] = self.redirect_uri_regex
-        return result
 
-class PublicClient(Client):
-    __tablename__ = 'public_client'
-    __mapper_args__ = {
-        'polymorphic_identity': 'public',
-    }
+class PublicClient(object):
+    def __init__(self, client_id, session):
+        self.client_id = client_id
+        self.session = session
+        self.audience_scope = None
+        self.audience_client = None
 
-    client_pk = Column(Integer, ForeignKey('client.client_pk'),
-            primary_key=True)
+    def is_valid_scope_set(self, scopes):
+        if len(scopes) not in (1, 2):
+            return False
+        if len(scopes) == 2:
+            if 'openid' not in scopes:
+                return False
+            scopes.remove('openid')
+            self.use_openid = True
 
-    @property
-    def requires_authentication(self):
-        return False
+        self.audience_scope = scopes.pop()
+        self.audience_client = self.session.query(ConfidentialClient
+                ).join(ConfidentialClient.audience_for
+                ).filter(Scope.value==self.audience_scope).first()
 
-    def authenticate(self, client_secret=None):
-        return self.active
+        if not self.audience_client:
+            return False
+
+        return True
 
     def is_valid_redirect_uri(self, redirect_uri):
         return redirect_uri == None
-
-    def is_valid_grant_type(self, grant_type):
-        # XXX This should probably raise an exception.
-        return False
 
     _VALID_RESPONSE_TYPES = set([
         'token',
@@ -150,15 +134,3 @@ class PublicClient(Client):
     ])
     def is_valid_response_type(self, response_type):
         return response_type in self._VALID_RESPONSE_TYPES
-
-
-_CLIENT_TYPES = {
-    'confidential': ConfidentialClient,
-    'public': PublicClient,
-}
-def create_client(client_type=None, redirect_uri_regex=None, **kwargs):
-    cls = _CLIENT_TYPES[client_type]
-    client = cls(**kwargs)
-    if client_type == 'confidential':
-        client.redirect_uri_regex = redirect_uri_regex
-    return client

@@ -21,10 +21,10 @@ class RefreshToken(Base):
             default=lambda: datetime.datetime.utcnow()
                 + datetime.timedelta(days=30))
 
-    client_pk = Column(Integer, ForeignKey('client.client_pk'), nullable=False)
+    client_pk = Column(Integer, ForeignKey('confidential_client.client_pk'), nullable=False)
     user_pk = Column(Integer, ForeignKey('user.user_pk'), nullable=False)
 
-    client = relationship('Client')
+    client = relationship('ConfidentialClient')
     user = relationship('User')
 
     active = Column(Boolean, nullable=False, default=False)

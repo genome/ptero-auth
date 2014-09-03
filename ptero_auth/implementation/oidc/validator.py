@@ -8,8 +8,14 @@ class OIDCRequestValidator(RequestValidator):
         self.session = session
 
     def _get_client(self, client_id):
-        return self.session.query(models.Client
+        client = self.session.query(models.ConfidentialClient
                 ).filter_by(client_id=client_id).first()
+        if not client:
+            client = models.PublicClient(client_id=client_id,
+                    session=self.session)
+
+        return client
+
 
     def validate_client_id(self, client_id, request):
         request.client = self._get_client(client_id)
