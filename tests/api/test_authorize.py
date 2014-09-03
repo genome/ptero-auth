@@ -16,7 +16,7 @@ class GetAuthorizeBase(BaseFlaskTest):
             + r'/(resource1)|(resource2)/?(\?.+)?$',
         'allowed_scopes': ['foo', 'bar', 'baz'],
         'default_scopes': ['bar', 'baz'],
-        'audience_for': ['bar'],
+        'audience_for': 'bar',
     }
 
     VALID_PUBLIC_CLIENT = {

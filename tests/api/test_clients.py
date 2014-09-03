@@ -15,7 +15,7 @@ class PostClientsList(BaseFlaskTest):
             + r'/(resource1)|(resource2)/?(\?.+)?$',
         'allowed_scopes': ['foo', 'bar', 'baz'],
         'default_scopes': ['bar', 'baz'],
-        'audience_for': ['bar'],
+        'audience_for': 'bar',
     }
 
     def test_should_return_401_with_no_credentials(self):
@@ -95,7 +95,7 @@ class PostClientsList(BaseFlaskTest):
         'redirect_uri_regex': lambda x: x,
         'allowed_scopes': set,
         'default_scopes': set,
-        'audience_for': set,
+        'audience_for': lambda x: x,
     }
     def compare_client_data(self, actual, expected):
         for posted_key, posted_value in expected.iteritems():

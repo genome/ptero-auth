@@ -55,10 +55,8 @@ class Backend(object):
 
         allowed_scopes = set(client_data['allowed_scopes'])
         default_scopes = set(client_data.get('default_scopes', []))
-        audience_for = set(client_data.get('audience_for', []))
 
         assert default_scopes.issubset(allowed_scopes)
-        assert audience_for.issubset(allowed_scopes)
 
         client = models.create_client(
                 client_name=client_data['name'],
@@ -67,7 +65,7 @@ class Backend(object):
                 redirect_uri_regex=client_data.get('redirect_uri_regex'),
                 allowed_scopes=[scope_dict[sv] for sv in allowed_scopes],
                 default_scopes=[scope_dict[sv] for sv in default_scopes],
-                audience_for=[scope_dict[sv] for sv in audience_for],
+                audience_for=scope_dict.get(client_data.get('audience_for')),
         )
 
         self.session.add(client)
@@ -101,7 +99,8 @@ class Backend(object):
         result = set()
         result.update(client_data.get('allowed_scopes', []))
         result.update(client_data.get('default_scopes', []))
-        result.update(client_data.get('audience_for', []))
+        if 'audience_for' in client_data:
+            result.add(client_data['audience_for'])
         return result
 
     def get_client(self, client_id):

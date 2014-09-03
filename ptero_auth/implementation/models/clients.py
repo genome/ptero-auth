@@ -37,8 +37,9 @@ class Client(Base):
     allowed_scopes = relationship('Scope', secondary='allowed_scope_bridge')
     default_scopes = relationship('Scope', secondary='default_scope_bridge')
 
-    audience_for = relationship('Scope', secondary='scope_audience_bridge',
-            backref='audience')
+    audience_for_pk = Column(Integer, ForeignKey('scope.scope_pk'), unique=True,
+            index=True)
+    audience_for = relationship('Scope', backref='audience')
 
     def authenticate(self, client_secret=None):  # pragma: no cover
         return NotImplemented
@@ -66,7 +67,7 @@ class Client(Base):
         return {
             'active': self.active,
             'allowed_scopes': sorted([s.value for s in self.allowed_scopes]),
-            'audience_for': sorted([s.value for s in self.audience_for]),
+            'audience_for': self.audience_for.value,
             'client_id': self.client_id,
             'created_at': int(time.mktime(self.created_at.utctimetuple())),
             'created_by': self.created_by.name,
