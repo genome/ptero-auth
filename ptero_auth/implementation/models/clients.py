@@ -86,16 +86,17 @@ class ConfidentialClient(Base):
     def is_valid_response_type(self, response_type):
         return response_type == 'code'
 
-    def is_valid_redirect_uri(self, redirect_uri, scopes=None):
+    def is_valid_redirect_uri(self, redirect_uri):
         return re.match(self.redirect_uri_regex, redirect_uri)
 
 
 class PublicClient(object):
     requires_authentication = False
 
-    def __init__(self, client_id, session):
+    def __init__(self, client_id, session, scopes):
         self.client_id = client_id
         self.session = session
+        self.scopes = scopes
         self._audience_client = None
 
     def is_valid_scope_set(self, scopes):
@@ -106,31 +107,31 @@ class PublicClient(object):
             if 'openid' not in scopes:
                 return False
 
-        if not self._get_audience_client(scopes):
+        if not self._get_audience_client():
             return False
 
         return True
 
-    def _get_audience_client(self, scopes):
+    def _get_audience_client(self):
         if not self._audience_client:
             self._audience_client = self.session.query(ConfidentialClient
                     ).join(ConfidentialClient.audience_for
-                    ).filter(Scope.value==self._get_audience_scope(scopes)
+                    ).filter(Scope.value==self._get_audience_scope()
                     ).first()
         return self._audience_client
 
-    def _get_audience_scope(self, scopes):
-        s = set(scopes)
+    def _get_audience_scope(self):
+        s = set(self.scopes)
         s.discard('openid')
         if not s:
             return
         return s.pop()
 
-    def is_valid_redirect_uri(self, redirect_uri, scopes):
-        ac = self._get_audience_client(scopes)
+    def is_valid_redirect_uri(self, redirect_uri):
+        ac = self._get_audience_client()
         if not ac:
             return False
-        return ac.is_valid_redirect_uri(redirect_uri, scopes)
+        return ac.is_valid_redirect_uri(redirect_uri)
 
     _VALID_RESPONSE_TYPES = set([
         'token',
