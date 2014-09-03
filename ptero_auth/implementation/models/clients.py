@@ -12,7 +12,18 @@ import time
 __all__ = ['ConfidentialClient', 'PublicClient']
 
 
-class ConfidentialClient(Base):
+class ClientInterface(object):
+    def is_valid_scope_set(self, scope_set):  # pragma: no cover
+        return NotImplemented
+
+    def is_valid_redirect_uri(self, redirect_uri):  # pragma: no cover
+        return NotImplemented
+
+    def is_valid_response_type(self, response_type):  # pragma: no cover
+        return NotImplemented
+
+
+class ConfidentialClient(Base, ClientInterface):
     __tablename__ = 'confidential_client'
 
     client_pk = Column(Integer, primary_key=True)
@@ -90,7 +101,7 @@ class ConfidentialClient(Base):
         return re.match(self.redirect_uri_regex, redirect_uri)
 
 
-class PublicClient(object):
+class PublicClient(ClientInterface):
     requires_authentication = False
 
     def __init__(self, session, scopes):
@@ -139,3 +150,6 @@ class PublicClient(object):
     ])
     def is_valid_response_type(self, response_type):
         return response_type in self._VALID_RESPONSE_TYPES
+
+    def get_default_redirect_uri(self):
+        return NotImplemented
