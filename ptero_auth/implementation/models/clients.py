@@ -116,12 +116,12 @@ class PublicClient(ClientInterface):
         self.scopes = scopes
         self._audience_client = None
 
-    def is_valid_scope_set(self, scopes):
-        if len(scopes) not in (1, 2):
+    def is_valid_scope_set(self, scope_set):
+        if len(scope_set) not in (1, 2):
             return False
 
-        if len(scopes) == 2:
-            if 'openid' not in scopes:
+        if len(scope_set) == 2:
+            if 'openid' not in scope_set:
                 return False
 
         if not self._get_audience_client():
