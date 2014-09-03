@@ -62,6 +62,7 @@ class Backend(object):
                 client_name=client_data['name'],
                 created_by=user,
                 redirect_uri_regex=client_data.get('redirect_uri_regex'),
+                default_redirect_uri=client_data.get('default_redirect_uri'),
                 allowed_scopes=[scope_dict[sv] for sv in allowed_scopes],
                 default_scopes=[scope_dict[sv] for sv in default_scopes],
                 audience_for=scope_dict.get(client_data.get('audience_for')),

@@ -9,11 +9,13 @@ CONFIDENTIAL_CLIENT_PORT = 8008
 
 class GetAuthorizeBase(BaseFlaskTest):
     VALID_CONFIDENTIAL_CLIENT = {
-        'type': 'confidential',
         'name': 'widget maker v1.1',
         'redirect_uri_regex': '^http://localhost:'
             + str(CONFIDENTIAL_CLIENT_PORT)
             + r'/(resource1)|(resource2)/?(\?.+)?$',
+        'default_redirect_uri': 'http://localhost:'
+            + str(CONFIDENTIAL_CLIENT_PORT)
+            + '/resource1/12345',
         'allowed_scopes': ['foo', 'bar', 'baz'],
         'default_scopes': ['bar', 'baz'],
         'audience_for': 'bar',
@@ -116,6 +118,18 @@ class GetAuthorizeImplicitFlow(GetAuthorizeBase):
 
         self.assertEqual(response.status_code, 302)
 
+    def test_should_return_redirect_to_default(self):
+        response = self.client.get(self.public_authorize_url(
+            scopes=['openid', 'bar']),
+            headers={'Authorization': 'API-Key ' + self.bob_key})
+
+        url_obj = urlparse.urlparse(response.headers['Location'])
+
+        self.assertEqual(
+                urlparse.urlunparse((url_obj.scheme, url_obj.netloc,
+                    url_obj.path, None, None, None)),
+                self.confidential_client_data['default_redirect_uri'])
+
     def test_should_return_access_token(self):
         response = self.client.get(self.public_authorize_url(
             scopes=['openid', 'bar']),
@@ -132,27 +146,21 @@ class GetAuthorizeImplicitFlow(GetAuthorizeBase):
             scopes=['openid', 'bar', 'baz']),
             headers={'Authorization': 'API-Key ' + self.bob_key})
 
-        fragment_data = self._get_frament_data(response)
-
-        self.assertIn('error', fragment_data)
+        self.assertEqual(response.status_code, 400)
 
     def test_should_error_with_no_audience_scope(self):
         response = self.client.get(self.public_authorize_url(
             scopes=['openid']),
             headers={'Authorization': 'API-Key ' + self.bob_key})
 
-        fragment_data = self._get_frament_data(response)
-
-        self.assertIn('error', fragment_data)
+        self.assertEqual(response.status_code, 400)
 
     def test_should_error_with_non_openid_second_scope(self):
         response = self.client.get(self.public_authorize_url(
             scopes=['bar', 'baz']),
             headers={'Authorization': 'API-Key ' + self.bob_key})
 
-        fragment_data = self._get_frament_data(response)
-
-        self.assertIn('error', fragment_data)
+        self.assertEqual(response.status_code, 400)
 
     def test_should_error_with_unregistered_redirect_uri(self):
         response = self.client.get(self.public_authorize_url(

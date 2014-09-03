@@ -12,6 +12,9 @@ class PostClientsList(BaseFlaskTest):
         'redirect_uri_regex': '^http://localhost:'
             + str(CONFIDENTIAL_CLIENT_PORT)
             + r'/(resource1)|(resource2)/?(\?.+)?$',
+        'default_redirect_uri': 'http://localhost:'
+            + str(CONFIDENTIAL_CLIENT_PORT)
+            + '/resource1/12345',
         'allowed_scopes': ['foo', 'bar', 'baz'],
         'default_scopes': ['bar', 'baz'],
         'audience_for': 'bar',
@@ -92,6 +95,7 @@ class PostClientsList(BaseFlaskTest):
         'type': lambda x: x,
         'name': lambda x: x,
         'redirect_uri_regex': lambda x: x,
+        'default_redirect_uri': lambda x: x,
         'allowed_scopes': set,
         'default_scopes': set,
         'audience_for': lambda x: x,

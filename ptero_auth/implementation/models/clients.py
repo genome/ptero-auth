@@ -22,6 +22,8 @@ class ClientInterface(object):
     def is_valid_response_type(self, response_type):  # pragma: no cover
         return NotImplemented
 
+    def get_default_redirect_uri(self):  # pragma: no cover
+        return NotImplemented
 
 class ConfidentialClient(Base, ClientInterface):
     __tablename__ = 'confidential_client'
@@ -33,6 +35,7 @@ class ConfidentialClient(Base, ClientInterface):
     client_secret = Column(Text, default=lambda: generate_id('cs'))
 
     redirect_uri_regex = Column(Text, nullable=False)
+    default_redirect_uri = Column(Text, nullable=False)
 
     active = Column(Boolean, index=True, default=True)
 
@@ -74,6 +77,7 @@ class ConfidentialClient(Base, ClientInterface):
             'created_at': int(time.mktime(self.created_at.utctimetuple())),
             'created_by': self.created_by.name,
             'default_scopes': sorted([s.value for s in self.default_scopes]),
+            'default_redirect_uri': self.default_redirect_uri,
             'name': self.client_name,
             'redirect_uri_regex': self.redirect_uri_regex,
         }
@@ -99,6 +103,9 @@ class ConfidentialClient(Base, ClientInterface):
 
     def is_valid_redirect_uri(self, redirect_uri):
         return re.match(self.redirect_uri_regex, redirect_uri)
+
+    def get_default_redirect_uri(self):
+        return self.default_redirect_uri
 
 
 class PublicClient(ClientInterface):
@@ -133,7 +140,7 @@ class PublicClient(ClientInterface):
     def _get_audience_scope(self):
         s = set(self.scopes)
         s.discard('openid')
-        if not s:
+        if len(s) != 1:
             return
         return s.pop()
 
@@ -152,4 +159,7 @@ class PublicClient(ClientInterface):
         return response_type in self._VALID_RESPONSE_TYPES
 
     def get_default_redirect_uri(self):
-        return NotImplemented
+        ac = self._get_audience_client()
+        if not ac:
+            return None
+        return ac.get_default_redirect_uri()
