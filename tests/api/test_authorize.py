@@ -132,3 +132,12 @@ class GetAuthorizeImplicitFlow(GetAuthorizeBase):
         fragment_data = self._get_frament_data(response)
 
         self.assertIn('error', fragment_data)
+
+    def test_should_error_with_no_audience_scope(self):
+        response = self.client.get(self.public_authorize_url(
+            scopes=['openid']),
+            headers={'Authorization': 'API-Key ' + self.bob_key})
+
+        fragment_data = self._get_frament_data(response)
+
+        self.assertIn('error', fragment_data)
