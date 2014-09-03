@@ -6,6 +6,8 @@ from oauthlib.uri_validate import is_absolute_uri
 
 
 class OIDCImplicitGrant(ImplicitGrant):
+    VALID_RESPONSE_TYPES = {'token', 'id_token token'}
+
     def __init__(self, request_validator, token_handler):
         ImplicitGrant.__init__(self, request_validator)
         self._oidc_token_handler = token_handler
@@ -97,7 +99,7 @@ class OIDCImplicitGrant(ImplicitGrant):
                         description='Duplicate %s parameter.' % param, request=request)
 
         # REQUIRED. Value MUST be set to "token".
-        if request.response_type not in ['token', 'token id_token', 'id_token token']:
+        if request.response_type not in self.VALID_RESPONSE_TYPES:
             raise errors.UnsupportedResponseTypeError(state=request.state, request=request)
 
         log.debug('Validating use of response_type token for client %r (%r).',

@@ -15,10 +15,11 @@ class AuthorizationCodeGrant(Base):
     created_at = Column(DateTime(timezone=True), index=True, nullable=False,
             default=datetime.datetime.utcnow)
 
-    client_pk = Column(Integer, ForeignKey('client.client_pk'), nullable=False)
+    client_pk = Column(Integer, ForeignKey('confidential_client.client_pk'),
+            nullable=False)
     user_pk = Column(Integer, ForeignKey('user.user_pk'), nullable=False)
 
-    client = relationship('Client')
+    client = relationship('ConfidentialClient')
     user = relationship('User')
 
     scopes = relationship('Scope', secondary='grant_scope_bridge')

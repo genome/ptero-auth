@@ -25,6 +25,8 @@ class AuthorizeView(Resource):
             return None, 403
 
         scopes = self._get_scopes()
+        if not scopes:
+            return None, 400
 
         try:
             header, body, status_code =\
@@ -53,6 +55,8 @@ class AuthorizeView(Resource):
 
     def _get_default_scopes(self):
         client = g.backend.get_client(request.args.get('client_id'))
+        if not client:
+            return []
         return client['default_scopes']
 
 

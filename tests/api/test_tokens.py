@@ -9,11 +9,13 @@ CONFIDENTIAL_CLIENT_PORT = 8008
 
 class PostTokens(BaseFlaskTest):
     VALID_CONFIDENTIAL_CLIENT = {
-        'type': 'confidential',
         'name': 'widget maker v1.1',
         'redirect_uri_regex': '^http://localhost:'
             + str(CONFIDENTIAL_CLIENT_PORT)
             + r'/(resource1)|(resource2)/?(\?.+)?$',
+        'default_redirect_uri': 'http://localhost:'
+            + str(CONFIDENTIAL_CLIENT_PORT)
+            + '/resource1/12345',
         'allowed_scopes': ['foo', 'bar', 'baz', 'openid'],
         'default_scopes': ['bar', 'baz', 'openid'],
         'audience_for': 'bar',

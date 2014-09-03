@@ -7,12 +7,20 @@ class OIDCRequestValidator(RequestValidator):
     def __init__(self, session):
         self.session = session
 
-    def _get_client(self, client_id):
-        return self.session.query(models.Client
+    def _get_client(self, client_id, request):
+        if request.client:
+            return request.client
+
+        client = self.session.query(models.ConfidentialClient
                 ).filter_by(client_id=client_id).first()
+        if not client:
+            client = models.PublicClient(session=self.session,
+                    scopes=request.scopes)
+
+        return client
 
     def validate_client_id(self, client_id, request):
-        request.client = self._get_client(client_id)
+        request.client = self._get_client(client_id, request)
         return request.client is not None
 
     def validate_redirect_uri(self, client_id, redirect_uri, request):
@@ -34,7 +42,7 @@ class OIDCRequestValidator(RequestValidator):
         self.session.commit()
 
     def client_authentication_required(self, request):
-        request.client = self._get_client(self._get_client_id(request))
+        request.client = self._get_client(self._get_client_id(request), request)
         return request.client.requires_authentication
 
     def _get_client_id(self, request):
@@ -80,3 +88,6 @@ class OIDCRequestValidator(RequestValidator):
         self.session.query(models.AuthorizationCodeGrant
                 ).filter_by(code=code).delete()
         self.session.commit()
+
+    def get_default_redirect_uri(self, client_id, request):
+        return request.client.get_default_redirect_uri()
