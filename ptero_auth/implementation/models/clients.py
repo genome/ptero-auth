@@ -41,15 +41,7 @@ class ConfidentialClient(Base):
             index=True)
     audience_for = relationship('Scope', backref='audience')
 
-    def authenticate(self, client_secret=None):  # pragma: no cover
-        return NotImplemented
-
-    @property
-    def requires_authentication(self):  # pragma: no cover
-        return NotImplemented
-
-    def is_valid_redirect_uri(self, redirect_uri):  # pragma: no cover
-        return NotImplemented
+    requires_authentication = True
 
     def is_valid_scope_set(self, scope_set):
         return scope_set.issubset(self.allowed_scope_set)
@@ -99,6 +91,8 @@ class ConfidentialClient(Base):
 
 
 class PublicClient(object):
+    requires_authentication = False
+
     def __init__(self, client_id, session):
         self.client_id = client_id
         self.session = session
