@@ -93,49 +93,38 @@ class PostTokens(BaseFlaskTest):
     def _get_response_data(self, response):
         return json.loads(response.data)
 
-    def test_should_return_401_with_bad_client_credentials(self):
-        response = self.client.post('/v1/tokens',
-                data=self.get_post_data(self.get_authorization()),
+    def _post_with_typical_params(self, scopes=None, secret=None):
+        if secret is None:
+            secret = self.client_secret
+
+        return self.client.post('/v1/tokens',
+                data=self.get_post_data(self.get_authorization(scopes=scopes)),
                 headers={
                     'Authorization': self.basic_auth_header(self.client_id,
-                        'invalid-secret'),
+                        secret),
                     'Contet-Type': 'application/x-www-form-urlencoded',
                 })
+
+
+    def test_should_return_401_with_bad_client_credentials(self):
+        response = self._post_with_typical_params(secret='invalid-secret')
 
         self.assertEqual(response.status_code, 401)
 
     def test_should_return_200_with_valid_client_credentials(self):
-        response = self.client.post('/v1/tokens',
-                data=self.get_post_data(self.get_authorization()),
-                headers={
-                    'Authorization': self.basic_auth_header(self.client_id,
-                        self.client_secret),
-                    'Contet-Type': 'application/x-www-form-urlencoded',
-                })
+        response = self._post_with_typical_params()
 
         self.assertEqual(response.status_code, 200)
 
     def test_should_return_valid_access_token(self):
-        response = self.client.post('/v1/tokens',
-                data=self.get_post_data(self.get_authorization()),
-                headers={
-                    'Authorization': self.basic_auth_header(self.client_id,
-                        self.client_secret),
-                    'Contet-Type': 'application/x-www-form-urlencoded',
-                })
+        response = self._post_with_typical_params()
 
         data = self._get_response_data(response)
         self.assertIn('access_token', data)
 
     def test_should_return_valid_id_token(self):
-        response = self.client.post('/v1/tokens',
-                data=self.get_post_data(
-                    self.get_authorization(scopes=['bar', 'foo', 'openid'])),
-                headers={
-                    'Authorization': self.basic_auth_header(self.client_id,
-                        self.client_secret),
-                    'Contet-Type': 'application/x-www-form-urlencoded',
-                })
+        response = self._post_with_typical_params(
+                scopes=['bar', 'foo', 'openid'])
 
         data = self._get_response_data(response)
         self.assertIn('id_token', data)
@@ -153,13 +142,7 @@ class PostTokens(BaseFlaskTest):
         self.assertFalse(id_token.get_claim_from_namespace(NAMESPACE, 'roles'))
 
     def test_should_return_multiple_audiences(self):
-        response = self.client.post('/v1/tokens',
-                data=self.get_post_data(self.get_authorization()),
-                headers={
-                    'Authorization': self.basic_auth_header(self.client_id,
-                        self.client_secret),
-                    'Contet-Type': 'application/x-www-form-urlencoded',
-                })
+        response = self._post_with_typical_params()
 
         data = self._get_response_data(response)
         id_token_jws = jot.deserialize(data['id_token'])
