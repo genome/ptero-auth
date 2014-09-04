@@ -1,40 +1,54 @@
 from .base import BaseFlaskTest
+import jot
 import json
 import urllib
 import urlparse
+import uuid
 
 
-CONFIDENTIAL_CLIENT_PORT = 8008
+NAMESPACE = uuid.UUID('66deca4c-4e8a-44ce-a617-3d37bc0bcfaa')
 
 
 class PostTokens(BaseFlaskTest):
-    VALID_CONFIDENTIAL_CLIENT = {
-        'name': 'widget maker v1.1',
-        'redirect_uri_regex': '^http://localhost:'
-            + str(CONFIDENTIAL_CLIENT_PORT)
-            + r'/(resource1)|(resource2)/?(\?.+)?$',
-        'default_redirect_uri': 'http://localhost:'
-            + str(CONFIDENTIAL_CLIENT_PORT)
-            + '/resource1/12345',
-        'allowed_scopes': ['foo', 'bar', 'baz', 'openid'],
-        'default_scopes': ['bar', 'baz', 'openid'],
-        'audience_for': 'bar',
-    }
+    VALID_CONFIDENTIAL_CLIENTS = [
+        {
+            'name': 'widget maker v1.1',
+            'redirect_uri_regex':
+                r'^http://localhost:8008/(resource1)|(resource2)/?(\?.+)?$',
+            'default_redirect_uri':
+                r'^http://localhost:8008/resource1/12345',
+            'allowed_scopes': ['foo', 'bar', 'baz', 'openid'],
+            'default_scopes': ['bar', 'baz', 'openid'],
+            'audience_for': 'bar',
+            'audience_claims': ['posix'],
+        },
+
+        {
+            'name': 'gidget shaker v1.1',
+            'redirect_uri_regex':
+                r'^http://localhost:5005/gidget/.+(\?.+)?$',
+            'default_redirect_uri':
+                r'^http://localhost:5005/gidget/12345',
+            'allowed_scopes': ['baz', 'openid'],
+            'default_scopes': ['baz', 'openid'],
+            'audience_for': 'baz',
+            'audience_claims': ['roles'],
+        },
+    ]
 
     def setUp(self):
         super(PostTokens, self).setUp()
         self.bob_key = self.create_api_key('bob', 'foobob')
-        self.valid_client_data = self.register_client('alice', 'apass',
-                **self.VALID_CONFIDENTIAL_CLIENT)
+        self.valid_client_data = []
+        for vcc_data in self.VALID_CONFIDENTIAL_CLIENTS:
+            self.valid_client_data.append(self.register_client('alice', 'apass',
+                **vcc_data))
 
-        self.redirect_uri = ('http://localhost:%d/resource1/asdf'
-                % CONFIDENTIAL_CLIENT_PORT)
-
-        self.authorize_args = self.get_authorization()
+        self.redirect_uri = 'http://localhost:8008/resource1/asdf'
 
     def authorize_url(self, response_type='code', scopes=None):
         args = {
-            'client_id': self.valid_client_data['client_id'],
+            'client_id': self.valid_client_data[0]['client_id'],
             'response_type': response_type,
             'redirect_uri': self.redirect_uri,
             'state': 'OPAQUE VALUE FOR PREVENTING FORGERY ATTACKS',
@@ -45,8 +59,8 @@ class PostTokens(BaseFlaskTest):
 
         return '/v1/authorize?' + urllib.urlencode(args)
 
-    def get_authorization(self):
-        response = self.client.get(self.authorize_url(),
+    def get_authorization(self, scopes=None):
+        response = self.client.get(self.authorize_url(scopes=scopes),
                 headers={'Authorization': 'API-Key ' + self.bob_key})
         url = urlparse.urlparse(response.headers['Location'])
         args = urlparse.parse_qs(url.query)
@@ -59,42 +73,93 @@ class PostTokens(BaseFlaskTest):
 
     @property
     def client_id(self):
-        return self.valid_client_data['client_id']
+        return self.valid_client_data[0]['client_id']
 
     @property
     def client_secret(self):
-        return self.valid_client_data['client_secret']
+        return self.valid_client_data[0]['client_secret']
 
-    def get_post_data(self):
-        return urllib.urlencode({
-            'code': self.authorize_args['code'],
+    def get_post_data(self, authorize_args, scopes=None):
+        args = {
+            'code': authorize_args['code'],
             'grant_type': 'authorization_code',
-            'redirect_uri': self.authorize_args['redirect_uri'],
-        })
+            'redirect_uri': authorize_args['redirect_uri'],
+        }
+        if scopes:
+            args['scope'] = ' '.join(scopes)
 
-    def test_should_return_401_with_bad_client_credentials(self):
-        response = self.client.post('/v1/tokens', data=self.get_post_data(),
+        return urllib.urlencode(args)
+
+    def _get_response_data(self, response):
+        return json.loads(response.data)
+
+    def _post_with_typical_params(self, scopes=None, secret=None):
+        if secret is None:
+            secret = self.client_secret
+
+        return self.client.post('/v1/tokens',
+                data=self.get_post_data(self.get_authorization(scopes=scopes)),
                 headers={
                     'Authorization': self.basic_auth_header(self.client_id,
-                        'invalid-secret'),
+                        secret),
                     'Contet-Type': 'application/x-www-form-urlencoded',
                 })
+
+
+    def test_should_return_401_with_bad_client_credentials(self):
+        response = self._post_with_typical_params(secret='invalid-secret')
 
         self.assertEqual(response.status_code, 401)
 
     def test_should_return_200_with_valid_client_credentials(self):
-        response = self.client.post('/v1/tokens', data=self.get_post_data(),
-                headers={
-                    'Authorization': self.basic_auth_header(self.client_id,
-                        self.client_secret),
-                    'Contet-Type': 'application/x-www-form-urlencoded',
-                })
+        response = self._post_with_typical_params()
 
         self.assertEqual(response.status_code, 200)
 
+    def test_should_return_valid_access_token(self):
+        response = self._post_with_typical_params()
+
+        data = self._get_response_data(response)
+        self.assertIn('access_token', data)
+
+    def test_should_return_valid_id_token(self):
+        response = self._post_with_typical_params(
+                scopes=['bar', 'foo', 'openid'])
+
+        data = self._get_response_data(response)
+        self.assertIn('id_token', data)
+
+        id_token_jws = jot.deserialize(data['id_token'])
+        self.assertTrue(id_token_jws.verify_with(self.public_key))
+
+        id_token = id_token_jws.payload
+        self.assertTrue(id_token.is_valid)
+        self.assertEqual(len(id_token.claims['aud']), 1)
+        self.assertTrue(id_token.has_audience(
+            self.valid_client_data[0]['client_id']))
+
+        self.assertTrue(id_token.get_claim_from_namespace(NAMESPACE, 'posix'))
+        self.assertFalse(id_token.get_claim_from_namespace(NAMESPACE, 'roles'))
+
+    def test_should_return_multiple_audiences(self):
+        response = self._post_with_typical_params()
+
+        data = self._get_response_data(response)
+        id_token_jws = jot.deserialize(data['id_token'])
+
+        id_token = id_token_jws.payload
+        self.assertTrue(id_token.has_audience(
+            self.valid_client_data[0]['client_id']))
+        self.assertTrue(id_token.has_audience(
+            self.valid_client_data[1]['client_id']))
+
+        self.assertTrue(id_token.get_claim_from_namespace(NAMESPACE, 'posix'))
+        self.assertTrue(id_token.get_claim_from_namespace(NAMESPACE, 'roles'))
+
     def test_should_return_401_with_invalid_redirect_uri(self):
+        authorize_args = self.get_authorization()
         post_data = urllib.urlencode({
-            'code': self.authorize_args['code'],
+            'code': authorize_args['code'],
             'grant_type': 'authorization_code',
             'redirect_uri': 'http://localhost:12000/something/invalid',
         })
@@ -108,7 +173,7 @@ class PostTokens(BaseFlaskTest):
         self.assertEqual(response.status_code, 401)
 
     def test_should_return_401_with_repeat_code(self):
-        post_data = self.get_post_data()
+        post_data = self.get_post_data(self.get_authorization())
         response1 = self.client.post('/v1/tokens', data=post_data,
                 headers={
                     'Authorization': self.basic_auth_header(self.client_id,

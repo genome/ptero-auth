@@ -1,3 +1,4 @@
+from .. import rsa_key
 from .base import BaseFlaskTest
 import json
 import re
@@ -18,7 +19,21 @@ class PostClientsList(BaseFlaskTest):
         'allowed_scopes': ['foo', 'bar', 'baz'],
         'default_scopes': ['bar', 'baz'],
         'audience_for': 'bar',
+        'audience_claims': ['posix'],
+        'public_key': {
+            'kid': 'SOME FANCY KID',
+            'key': rsa_key.RESOURCE_PUBLIC_KEY.exportKey(),
+            'alg': 'RSA1_5',
+            'enc': 'A128CBC-HS256',
+        },
     }
+
+    def _post_typical_client(self, username='alice', password='apass'):
+        return self.client.post('/v1/clients',
+                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
+                headers={
+                    'Authorization': self.basic_auth_header(username, password),
+                })
 
     def test_should_return_401_with_no_credentials(self):
         response = self.client.post('/v1/clients',
@@ -27,59 +42,35 @@ class PostClientsList(BaseFlaskTest):
         self.assertEqual(response.status_code, 401)
 
     def test_should_return_401_with_invalid_credentials(self):
-        response = self.client.post('/v1/clients',
-                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
-                headers={
-                    'Authorization': self.basic_auth_header('alice', 'nopass'),
-                })
+        response = self._post_typical_client('alice', 'nopass')
 
         self.assertEqual(response.status_code, 401)
 
     def test_should_return_403_for_non_admin_user(self):
-        response = self.client.post('/v1/clients',
-                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
-                headers={
-                    'Authorization': self.basic_auth_header('bob', 'foobob'),
-                })
+        response = self._post_typical_client('bob', 'foobob')
 
         self.assertEqual(response.status_code, 403)
 
     def test_should_return_201_with_admin_credentials(self):
-        response = self.client.post('/v1/clients',
-                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
-                headers={
-                    'Authorization': self.basic_auth_header('alice', 'apass'),
-                })
+        response = self._post_typical_client()
 
         self.assertEqual(response.status_code, 201)
 
     def test_should_set_location_header_with_admin_credentials(self):
-        response = self.client.post('/v1/clients',
-                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
-                headers={
-                    'Authorization': self.basic_auth_header('alice', 'apass'),
-                })
+        response = self._post_typical_client()
 
         self.assertTrue(re.match('http://localhost/v1/clients/\w+',
             response.headers['Location']))
 
     def test_should_return_client_data_with_admin_credentials(self):
-        response = self.client.post('/v1/clients',
-                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
-                headers={
-                    'Authorization': self.basic_auth_header('alice', 'apass'),
-                })
+        response = self._post_typical_client()
 
         response_data = json.loads(response.data)
 
         self.compare_client_data(response_data, self.VALID_CONFIDENTIAL_CLIENT)
 
     def test_should_persist_client_data_with_admin_credentials(self):
-        post_response = self.client.post('/v1/clients',
-                data=json.dumps(self.VALID_CONFIDENTIAL_CLIENT),
-                headers={
-                    'Authorization': self.basic_auth_header('alice', 'apass'),
-                })
+        post_response = self._post_typical_client()
 
         get_response = self.client.get(post_response.headers['Location'],
                 headers={
@@ -99,6 +90,8 @@ class PostClientsList(BaseFlaskTest):
         'allowed_scopes': set,
         'default_scopes': set,
         'audience_for': lambda x: x,
+        'audience_claims': set,
+        'public_key': lambda x: x
     }
     def compare_client_data(self, actual, expected):
         for posted_key, posted_value in expected.iteritems():

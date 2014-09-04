@@ -6,7 +6,8 @@ import sqlalchemy.exc
 class Backend(object):
     def __init__(self, session, signature_key, user_info_provider, admin_role):
         self.session = session
-        self.oidc_server = create_server(session, signature_key)
+        self.oidc_server = create_server(session, user_info_provider,
+                signature_key)
         self.user_info_provider = user_info_provider
         self.admin_role = admin_role
 
@@ -67,6 +68,18 @@ class Backend(object):
                 default_scopes=[scope_dict[sv] for sv in default_scopes],
                 audience_for=scope_dict.get(client_data.get('audience_for')),
         )
+
+        # XXX shouldn't be able to specify audience_claims without audience_for
+        for af in set(client_data.get('audience_claims', [])):
+            af_obj = models.AudienceClaim(client=client, value=af)
+
+        # XXX if 'audience_for' is specified, you must specify a public key
+        if 'public_key' in client_data:
+            enc_key = models.EncryptionKey(client=client,
+                    kid=client_data['public_key']['kid'],
+                    key=client_data['public_key']['key'],
+                    alg=client_data['public_key']['alg'],
+                    enc=client_data['public_key']['enc'])
 
         self.session.add(client)
         self.session.commit()

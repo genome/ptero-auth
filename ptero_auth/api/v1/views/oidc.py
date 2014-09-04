@@ -1,8 +1,8 @@
 from . import common
 from oauthlib.oauth2.rfc6749 import errors as oal_errors
 from ptero_auth import exceptions
-from flask import g, request
-from flask.ext.restful import Resource
+from flask import Response, g, request
+from flask.views import MethodView
 import logging
 import urllib
 
@@ -13,7 +13,7 @@ __all__ = ['AuthorizeView', 'TokenView']
 LOG = logging.getLogger(__file__)
 
 
-class AuthorizeView(Resource):
+class AuthorizeView(MethodView):
     def get(self):
         try:
             api_key = self._get_api_key()
@@ -36,7 +36,7 @@ class AuthorizeView(Resource):
         except oal_errors.FatalClientError:
             return None, 400
 
-        return body, status_code, header
+        return Response(body, status=status_code, headers=header)
 
     def _get_api_key(self):
         authorization = request.headers.get('Authorization')
@@ -60,10 +60,10 @@ class AuthorizeView(Resource):
         return client['default_scopes']
 
 
-class TokenView(Resource):
+class TokenView(MethodView):
     def post(self):
         header, body, status_code = g.backend.oidc_server.create_token_response(
                 uri=request.url, headers=request.headers, body=request.data,
                 credentials={'flask-auth': request.authorization})
 
-        return body, status_code, header
+        return Response(body, status=status_code, headers=header)
