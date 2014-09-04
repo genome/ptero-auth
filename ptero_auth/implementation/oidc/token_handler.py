@@ -30,10 +30,11 @@ class OIDCTokenHandler(BearerToken):
 
         iat = int(time.mktime(datetime.datetime.utcnow().timetuple()))
         exp = iat + 600
+        audiences = self.get_aud(request)
         id_token = jot.Token(claims={
             'iss': 'https://auth.ptero.gsc.wustl.edu',
             'sub': request.user.oidc_sub,
-            'aud': self.get_aud(request),
+            'aud': [a.client_id for a in audiences],
             'exp': exp,
             'iat': iat,
             'at_hash': self._at_hash(bearer_token['access_token']),
@@ -70,7 +71,7 @@ class OIDCTokenHandler(BearerToken):
         for scope in scope_set:
             audience = self._get_aud_client(scope)
             if audience:
-                result.append(audience.client_id)
+                result.append(audience)
 
         return result
 
