@@ -8,5 +8,5 @@ __all__ = ['create_server']
 
 def create_server(db_session, signature_key):
     validator = OIDCRequestValidator(db_session)
-    token_handler = OIDCTokenHandler(validator, **signature_key)
+    token_handler = OIDCTokenHandler(validator, db_session, **signature_key)
     return OIDCServer(validator, token_handler)

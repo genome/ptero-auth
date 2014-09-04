@@ -3,7 +3,7 @@ from .scopes import Scope
 from .util import generate_id
 from ptero_auth.utils import safe_compare
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import backref, relationship
 import datetime
 import re
 import time
@@ -53,7 +53,8 @@ class ConfidentialClient(Base, ClientInterface):
 
     audience_for_pk = Column(Integer, ForeignKey('scope.scope_pk'), unique=True,
             index=True)
-    audience_for = relationship('Scope', backref='audience')
+    audience_for = relationship('Scope',
+            backref=backref('audience', uselist=False))
 
     requires_authentication = True
 

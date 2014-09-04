@@ -1,4 +1,5 @@
 from oauthlib.oauth2.rfc6749.tokens import BearerToken
+from ptero_auth.implementation import models
 import hashlib
 import jot
 import jot.codec
@@ -13,9 +14,10 @@ _AT_HASH_ALGORITHMS = {
 
 
 class OIDCTokenHandler(BearerToken):
-    def __init__(self, request_validator, signature_alg='HS256',
+    def __init__(self, request_validator, db_session, signature_alg='HS256',
             signature_key=None, signature_kid=None, *args, **kwargs):
         BearerToken.__init__(self, request_validator, *args, **kwargs)
+        self.db_session = db_session
         self.signature_alg = signature_alg
         self.signature_key = signature_key
         self.signature_kid = signature_kid
@@ -31,7 +33,7 @@ class OIDCTokenHandler(BearerToken):
         id_token = jot.Token(claims={
             'iss': 'https://auth.ptero.gsc.wustl.edu',
             'sub': request.user.oidc_sub,
-            'aud': request.client.client_id,
+            'aud': self.get_aud(request),
             'exp': exp,
             'iat': iat,
             'at_hash': self._at_hash(bearer_token['access_token']),
@@ -59,3 +61,20 @@ class OIDCTokenHandler(BearerToken):
         digest = hasher(access_token)
         l = len(digest) / 2
         return jot.codec.base64url_encode(digest[:l])
+
+    def get_aud(self, request):
+        result = []
+
+        scope_set = set(request.scopes)
+        scope_set.discard('openid')
+        for scope in scope_set:
+            audience = self._get_aud_client(scope)
+            if audience:
+                result.append(audience.client_id)
+
+        return result
+
+    def _get_aud_client(self, scope):
+        s_obj = self.db_session.query(models.Scope
+                ).filter_by(value=scope).first()
+        return s_obj.audience

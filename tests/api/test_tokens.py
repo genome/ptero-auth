@@ -5,37 +5,46 @@ import urllib
 import urlparse
 
 
-CONFIDENTIAL_CLIENT_PORT = 8008
-
-
 class PostTokens(BaseFlaskTest):
-    VALID_CONFIDENTIAL_CLIENT = {
-        'name': 'widget maker v1.1',
-        'redirect_uri_regex': '^http://localhost:'
-            + str(CONFIDENTIAL_CLIENT_PORT)
-            + r'/(resource1)|(resource2)/?(\?.+)?$',
-        'default_redirect_uri': 'http://localhost:'
-            + str(CONFIDENTIAL_CLIENT_PORT)
-            + '/resource1/12345',
-        'allowed_scopes': ['foo', 'bar', 'baz', 'openid'],
-        'default_scopes': ['bar', 'baz', 'openid'],
-        'audience_for': 'bar',
-    }
+    VALID_CONFIDENTIAL_CLIENTS = [
+        {
+            'name': 'widget maker v1.1',
+            'redirect_uri_regex':
+                r'^http://localhost:8008/(resource1)|(resource2)/?(\?.+)?$',
+            'default_redirect_uri':
+                r'^http://localhost:8008/resource1/12345',
+            'allowed_scopes': ['foo', 'bar', 'baz', 'openid'],
+            'default_scopes': ['bar', 'baz', 'openid'],
+            'audience_for': 'bar',
+        },
+
+        {
+            'name': 'gidget shaker v1.1',
+            'redirect_uri_regex':
+                r'^http://localhost:5005/gidget/.+(\?.+)?$',
+            'default_redirect_uri':
+                r'^http://localhost:5005/gidget/12345',
+            'allowed_scopes': ['baz', 'openid'],
+            'default_scopes': ['baz', 'openid'],
+            'audience_for': 'baz',
+        },
+    ]
 
     def setUp(self):
         super(PostTokens, self).setUp()
         self.bob_key = self.create_api_key('bob', 'foobob')
-        self.valid_client_data = self.register_client('alice', 'apass',
-                **self.VALID_CONFIDENTIAL_CLIENT)
+        self.valid_client_data = []
+        for vcc_data in self.VALID_CONFIDENTIAL_CLIENTS:
+            self.valid_client_data.append(self.register_client('alice', 'apass',
+                **vcc_data))
 
-        self.redirect_uri = ('http://localhost:%d/resource1/asdf'
-                % CONFIDENTIAL_CLIENT_PORT)
+        self.redirect_uri = 'http://localhost:8008/resource1/asdf'
 
         self.authorize_args = self.get_authorization()
 
     def authorize_url(self, response_type='code', scopes=None):
         args = {
-            'client_id': self.valid_client_data['client_id'],
+            'client_id': self.valid_client_data[0]['client_id'],
             'response_type': response_type,
             'redirect_uri': self.redirect_uri,
             'state': 'OPAQUE VALUE FOR PREVENTING FORGERY ATTACKS',
@@ -60,18 +69,22 @@ class PostTokens(BaseFlaskTest):
 
     @property
     def client_id(self):
-        return self.valid_client_data['client_id']
+        return self.valid_client_data[0]['client_id']
 
     @property
     def client_secret(self):
-        return self.valid_client_data['client_secret']
+        return self.valid_client_data[0]['client_secret']
 
-    def get_post_data(self):
-        return urllib.urlencode({
+    def get_post_data(self, scopes=None):
+        args = {
             'code': self.authorize_args['code'],
             'grant_type': 'authorization_code',
             'redirect_uri': self.authorize_args['redirect_uri'],
-        })
+        }
+        if scopes:
+            args['scope'] = ' '.join(scopes)
+
+        return urllib.urlencode(args)
 
     def _get_response_data(self, response):
         return json.loads(response.data)
@@ -124,7 +137,25 @@ class PostTokens(BaseFlaskTest):
         id_token = id_token_jws.payload
         self.assertTrue(id_token.is_valid)
         self.assertTrue(id_token.has_audience(
-            self.valid_client_data['client_id']))
+            self.valid_client_data[0]['client_id']))
+
+    def test_should_return_multiple_audiences(self):
+        response = self.client.post('/v1/tokens',
+                data=self.get_post_data(scopes=['bar', 'baz', 'openid']),
+                headers={
+                    'Authorization': self.basic_auth_header(self.client_id,
+                        self.client_secret),
+                    'Contet-Type': 'application/x-www-form-urlencoded',
+                })
+
+        data = self._get_response_data(response)
+        id_token_jws = jot.deserialize(data['id_token'])
+
+        id_token = id_token_jws.payload
+        self.assertTrue(id_token.has_audience(
+            self.valid_client_data[0]['client_id']))
+        self.assertTrue(id_token.has_audience(
+            self.valid_client_data[1]['client_id']))
 
     def test_should_return_401_with_invalid_redirect_uri(self):
         post_data = urllib.urlencode({
