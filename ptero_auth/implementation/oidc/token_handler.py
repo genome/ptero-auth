@@ -31,7 +31,7 @@ class OIDCTokenHandler(BearerToken):
         id_token = jot.Token(claims={
             'iss': 'https://auth.ptero.gsc.wustl.edu',
             'sub': request.user.oidc_sub,
-            'aud': request.client_id,
+            'aud': request.client.client_id,
             'exp': exp,
             'iat': iat,
             'at_hash': self._at_hash(bearer_token['access_token']),

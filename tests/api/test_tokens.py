@@ -123,6 +123,8 @@ class PostTokens(BaseFlaskTest):
 
         id_token = id_token_jws.payload
         self.assertTrue(id_token.is_valid)
+        self.assertTrue(id_token.has_audience(
+            self.valid_client_data['client_id']))
 
     def test_should_return_401_with_invalid_redirect_uri(self):
         post_data = urllib.urlencode({

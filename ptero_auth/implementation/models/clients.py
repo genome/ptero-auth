@@ -111,7 +111,8 @@ class ConfidentialClient(Base, ClientInterface):
 class PublicClient(ClientInterface):
     requires_authentication = False
 
-    def __init__(self, session, scopes):
+    def __init__(self, client_id, session, scopes):
+        self.client_id = client_id
         self.session = session
         self.scopes = scopes
         self._audience_client = None
