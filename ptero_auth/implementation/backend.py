@@ -68,6 +68,10 @@ class Backend(object):
                 audience_for=scope_dict.get(client_data.get('audience_for')),
         )
 
+        # XXX shouldn't be able to specify audience_fields without audience_for
+        for af in set(client_data.get('audience_fields', [])):
+            af_obj = models.AudienceField(client=client, value=af)
+
         self.session.add(client)
         self.session.commit()
 

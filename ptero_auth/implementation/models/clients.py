@@ -2,14 +2,15 @@ from .base import Base
 from .scopes import Scope
 from .util import generate_id
 from ptero_auth.utils import safe_compare
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, Text
+from sqlalchemy import Column, UniqueConstraint
+from sqlalchemy import Boolean, Enum, DateTime, ForeignKey, Integer, Text
 from sqlalchemy.orm import backref, relationship
 import datetime
 import re
 import time
 
 
-__all__ = ['ConfidentialClient', 'PublicClient']
+__all__ = ['AudienceField', 'ConfidentialClient', 'PublicClient']
 
 
 class ClientInterface(object):
@@ -86,6 +87,9 @@ class ConfidentialClient(Base, ClientInterface):
 
         if self.audience_for:
             result['audience_for'] = self.audience_for.value
+            if self.audience_fields:
+                result['audience_fields'] = [af.value
+                        for af in self.audience_fields]
 
         return result
 
@@ -108,6 +112,22 @@ class ConfidentialClient(Base, ClientInterface):
 
     def get_default_redirect_uri(self):
         return self.default_redirect_uri
+
+
+class AudienceField(Base):
+    __tablename__ = 'audience_field'
+
+    audience_field_pk = Column(Integer, primary_key=True)
+    client_pk = Column(Integer, ForeignKey('confidential_client.client_pk'),
+            nullable=False)
+    value = Column(Enum('posix', 'roles'), nullable=False)
+
+    client = relationship(ConfidentialClient, backref='audience_fields')
+
+    __table_args__ = (
+        UniqueConstraint('client_pk', 'value', name='_c_af_unique'),
+    )
+
 
 
 class PublicClient(ClientInterface):

@@ -18,6 +18,7 @@ class PostClientsList(BaseFlaskTest):
         'allowed_scopes': ['foo', 'bar', 'baz'],
         'default_scopes': ['bar', 'baz'],
         'audience_for': 'bar',
+        'audience_fields': ['posix'],
     }
 
     def test_should_return_401_with_no_credentials(self):
@@ -99,6 +100,7 @@ class PostClientsList(BaseFlaskTest):
         'allowed_scopes': set,
         'default_scopes': set,
         'audience_for': lambda x: x,
+        'audience_fields': set,
     }
     def compare_client_data(self, actual, expected):
         for posted_key, posted_value in expected.iteritems():
