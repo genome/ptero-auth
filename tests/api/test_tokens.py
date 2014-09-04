@@ -46,8 +46,6 @@ class PostTokens(BaseFlaskTest):
 
         self.redirect_uri = 'http://localhost:8008/resource1/asdf'
 
-        self.authorize_args = self.get_authorization()
-
     def authorize_url(self, response_type='code', scopes=None):
         args = {
             'client_id': self.valid_client_data[0]['client_id'],
@@ -61,8 +59,8 @@ class PostTokens(BaseFlaskTest):
 
         return '/v1/authorize?' + urllib.urlencode(args)
 
-    def get_authorization(self):
-        response = self.client.get(self.authorize_url(),
+    def get_authorization(self, scopes=None):
+        response = self.client.get(self.authorize_url(scopes=scopes),
                 headers={'Authorization': 'API-Key ' + self.bob_key})
         url = urlparse.urlparse(response.headers['Location'])
         args = urlparse.parse_qs(url.query)
@@ -81,11 +79,11 @@ class PostTokens(BaseFlaskTest):
     def client_secret(self):
         return self.valid_client_data[0]['client_secret']
 
-    def get_post_data(self, scopes=None):
+    def get_post_data(self, authorize_args, scopes=None):
         args = {
-            'code': self.authorize_args['code'],
+            'code': authorize_args['code'],
             'grant_type': 'authorization_code',
-            'redirect_uri': self.authorize_args['redirect_uri'],
+            'redirect_uri': authorize_args['redirect_uri'],
         }
         if scopes:
             args['scope'] = ' '.join(scopes)
@@ -96,7 +94,8 @@ class PostTokens(BaseFlaskTest):
         return json.loads(response.data)
 
     def test_should_return_401_with_bad_client_credentials(self):
-        response = self.client.post('/v1/tokens', data=self.get_post_data(),
+        response = self.client.post('/v1/tokens',
+                data=self.get_post_data(self.get_authorization()),
                 headers={
                     'Authorization': self.basic_auth_header(self.client_id,
                         'invalid-secret'),
@@ -106,7 +105,8 @@ class PostTokens(BaseFlaskTest):
         self.assertEqual(response.status_code, 401)
 
     def test_should_return_200_with_valid_client_credentials(self):
-        response = self.client.post('/v1/tokens', data=self.get_post_data(),
+        response = self.client.post('/v1/tokens',
+                data=self.get_post_data(self.get_authorization()),
                 headers={
                     'Authorization': self.basic_auth_header(self.client_id,
                         self.client_secret),
@@ -116,7 +116,8 @@ class PostTokens(BaseFlaskTest):
         self.assertEqual(response.status_code, 200)
 
     def test_should_return_valid_access_token(self):
-        response = self.client.post('/v1/tokens', data=self.get_post_data(),
+        response = self.client.post('/v1/tokens',
+                data=self.get_post_data(self.get_authorization()),
                 headers={
                     'Authorization': self.basic_auth_header(self.client_id,
                         self.client_secret),
@@ -127,7 +128,9 @@ class PostTokens(BaseFlaskTest):
         self.assertIn('access_token', data)
 
     def test_should_return_valid_id_token(self):
-        response = self.client.post('/v1/tokens', data=self.get_post_data(),
+        response = self.client.post('/v1/tokens',
+                data=self.get_post_data(
+                    self.get_authorization(scopes=['bar', 'foo', 'openid'])),
                 headers={
                     'Authorization': self.basic_auth_header(self.client_id,
                         self.client_secret),
@@ -142,15 +145,16 @@ class PostTokens(BaseFlaskTest):
 
         id_token = id_token_jws.payload
         self.assertTrue(id_token.is_valid)
+        self.assertEqual(len(id_token.claims['aud']), 1)
         self.assertTrue(id_token.has_audience(
             self.valid_client_data[0]['client_id']))
 
         self.assertTrue(id_token.get_claim_from_namespace(NAMESPACE, 'posix'))
-        self.assertTrue(id_token.get_claim_from_namespace(NAMESPACE, 'roles'))
+        self.assertFalse(id_token.get_claim_from_namespace(NAMESPACE, 'roles'))
 
     def test_should_return_multiple_audiences(self):
         response = self.client.post('/v1/tokens',
-                data=self.get_post_data(),
+                data=self.get_post_data(self.get_authorization()),
                 headers={
                     'Authorization': self.basic_auth_header(self.client_id,
                         self.client_secret),
@@ -170,8 +174,9 @@ class PostTokens(BaseFlaskTest):
         self.assertTrue(id_token.get_claim_from_namespace(NAMESPACE, 'roles'))
 
     def test_should_return_401_with_invalid_redirect_uri(self):
+        authorize_args = self.get_authorization()
         post_data = urllib.urlencode({
-            'code': self.authorize_args['code'],
+            'code': authorize_args['code'],
             'grant_type': 'authorization_code',
             'redirect_uri': 'http://localhost:12000/something/invalid',
         })
@@ -185,7 +190,7 @@ class PostTokens(BaseFlaskTest):
         self.assertEqual(response.status_code, 401)
 
     def test_should_return_401_with_repeat_code(self):
-        post_data = self.get_post_data()
+        post_data = self.get_post_data(self.get_authorization())
         response1 = self.client.post('/v1/tokens', data=post_data,
                 headers={
                     'Authorization': self.basic_auth_header(self.client_id,
