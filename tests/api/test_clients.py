@@ -1,3 +1,4 @@
+from .. import rsa_key
 from .base import BaseFlaskTest
 import json
 import re
@@ -19,6 +20,12 @@ class PostClientsList(BaseFlaskTest):
         'default_scopes': ['bar', 'baz'],
         'audience_for': 'bar',
         'audience_fields': ['posix'],
+        'public_key': {
+            'kid': 'SOME FANCY KID',
+            'key': rsa_key.RESOURCE_PUBLIC_KEY.exportKey(),
+            'alg': 'RSA1_5',
+            'enc': 'A128CBC-HS256',
+        },
     }
 
     def test_should_return_401_with_no_credentials(self):
@@ -101,6 +108,7 @@ class PostClientsList(BaseFlaskTest):
         'default_scopes': set,
         'audience_for': lambda x: x,
         'audience_fields': set,
+        'public_key': lambda x: x
     }
     def compare_client_data(self, actual, expected):
         for posted_key, posted_value in expected.iteritems():

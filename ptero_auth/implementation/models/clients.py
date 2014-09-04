@@ -10,7 +10,12 @@ import re
 import time
 
 
-__all__ = ['AudienceField', 'ConfidentialClient', 'PublicClient']
+__all__ = [
+    'AudienceField',
+    'ConfidentialClient',
+    'EncryptionKey',
+    'PublicClient',
+]
 
 
 class ClientInterface(object):
@@ -91,6 +96,14 @@ class ConfidentialClient(Base, ClientInterface):
                 result['audience_fields'] = [af.value
                         for af in self.audience_fields]
 
+        if self.public_key:
+            result['public_key'] = {
+                'kid': self.public_key.kid,
+                'key': self.public_key.key,
+                'alg': self.public_key.alg,
+                'enc': self.public_key.enc,
+            }
+
         return result
 
     def authenticate(self, client_secret=None):
@@ -128,6 +141,20 @@ class AudienceField(Base):
         UniqueConstraint('client_pk', 'value', name='_c_af_unique'),
     )
 
+
+class EncryptionKey(Base):
+    __tablename__ = 'encryption_key'
+
+    encryption_key_pk = Column(Integer, primary_key=True)
+    client_pk = Column(Integer, ForeignKey('confidential_client.client_pk'),
+            nullable=False)
+    client = relationship(ConfidentialClient,
+            backref=backref('public_key', uselist=False))
+
+    kid = Column(Text, nullable=False, unique=True)
+    key = Column(Text, nullable=False)
+    alg = Column(Enum('RSA1_5'), nullable=False)
+    enc = Column(Enum('A128CBC-HS256'), nullable=False)
 
 
 class PublicClient(ClientInterface):

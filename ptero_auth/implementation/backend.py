@@ -73,6 +73,13 @@ class Backend(object):
         for af in set(client_data.get('audience_fields', [])):
             af_obj = models.AudienceField(client=client, value=af)
 
+        if 'public_key' in client_data:
+            enc_key = models.EncryptionKey(client=client,
+                    kid=client_data['public_key']['kid'],
+                    key=client_data['public_key']['key'],
+                    alg=client_data['public_key']['alg'],
+                    enc=client_data['public_key']['enc'])
+
         self.session.add(client)
         self.session.commit()
 
