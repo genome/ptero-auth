@@ -52,12 +52,13 @@ class OIDCTokenHandler(BearerToken):
         jws = id_token.sign_with(self.signature_key, alg=self.signature_alg,
                 kid=self.signature_kid)
 
-        if (request.response_type == 'token id_token'
-               or request.response_type == 'id_token token'):
-            pass
-            # XXX encrypt token
+        if request.client.requires_id_token_encryption:
+            aud_client = request.client.get_audience_client()
+            jwe = jws.encrypt_with(**aud_client.public_key.jot_encrypt_args())
+            return jwe.compact_serialize()
 
-        return jws.compact_serialize()
+        else:
+            return jws.compact_serialize()
 
     def create_token(self, request, refresh_token=False):
         token = super(OIDCTokenHandler, self).create_token(request, refresh_token)

@@ -1,4 +1,5 @@
 from .base import BaseFlaskTest
+from .. import rsa_key
 import jot
 import json
 import urllib
@@ -20,6 +21,12 @@ class GetAuthorizeBase(BaseFlaskTest):
         'allowed_scopes': ['foo', 'bar', 'baz'],
         'default_scopes': ['bar', 'baz'],
         'audience_for': 'bar',
+        'public_key': {
+            'kid': 'SOME FANCY KID',
+            'key': rsa_key.RESOURCE_PUBLIC_KEY.exportKey(),
+            'alg': 'RSA1_5',
+            'enc': 'A128CBC-HS256',
+        },
     }
 
     def setUp(self):
@@ -150,7 +157,11 @@ class GetAuthorizeImplicitFlow(GetAuthorizeBase):
         fragment_data = self._get_frament_data(response)
 
         self.assertIn('id_token', fragment_data)
-        id_token_jws = jot.deserialize(fragment_data['id_token'][0])
+        id_token_jwe = jot.deserialize(fragment_data['id_token'][0])
+
+
+        id_token_jws = id_token_jwe.verify_and_decrypt_with(
+                rsa_key.RESOURCE_PRIVATE_KEY)
         self.assertTrue(id_token_jws.verify_with(self.public_key))
 
         id_token = id_token_jws.payload

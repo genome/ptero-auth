@@ -1,6 +1,7 @@
 from .base import Base
 from .scopes import Scope
 from .util import generate_id
+from Crypto.PublicKey import RSA
 from ptero_auth.utils import safe_compare
 from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy import Boolean, Enum, DateTime, ForeignKey, Integer, Text
@@ -64,6 +65,7 @@ class ConfidentialClient(Base, ClientInterface):
             backref=backref('audience', uselist=False))
 
     requires_authentication = True
+    requires_id_token_encryption = False
 
     def is_valid_scope_set(self, scope_set):
         return scope_set.issubset(self.allowed_scope_set)
@@ -97,12 +99,7 @@ class ConfidentialClient(Base, ClientInterface):
                         for af in self.audience_fields]
 
         if self.public_key:
-            result['public_key'] = {
-                'kid': self.public_key.kid,
-                'key': self.public_key.key,
-                'alg': self.public_key.alg,
-                'enc': self.public_key.enc,
-            }
+            result['public_key'] = self.public_key.as_dict
 
         return result
 
@@ -156,9 +153,27 @@ class EncryptionKey(Base):
     alg = Column(Enum('RSA1_5'), nullable=False)
     enc = Column(Enum('A128CBC-HS256'), nullable=False)
 
+    @property
+    def as_dict(self):
+        return {
+            'kid': self.kid,
+            'key': self.key,
+            'alg': self.alg,
+            'enc': self.enc,
+        }
+
+    def jot_encrypt_args(self):
+        return {
+            'kid': self.kid,
+            'key': RSA.importKey(self.key),
+            'alg': self.alg,
+            'enc': self.enc,
+        }
+
 
 class PublicClient(ClientInterface):
     requires_authentication = False
+    requires_id_token_encryption = True
 
     def __init__(self, client_id, session, scopes):
         self.client_id = client_id
@@ -174,12 +189,12 @@ class PublicClient(ClientInterface):
             if 'openid' not in scope_set:
                 return False
 
-        if not self._get_audience_client():
+        if not self.get_audience_client():
             return False
 
         return True
 
-    def _get_audience_client(self):
+    def get_audience_client(self):
         if not self._audience_client:
             self._audience_client = self.session.query(ConfidentialClient
                     ).join(ConfidentialClient.audience_for
@@ -195,7 +210,7 @@ class PublicClient(ClientInterface):
         return s.pop()
 
     def is_valid_redirect_uri(self, redirect_uri):
-        ac = self._get_audience_client()
+        ac = self.get_audience_client()
         if not ac:
             return False
         return ac.is_valid_redirect_uri(redirect_uri)
@@ -209,7 +224,7 @@ class PublicClient(ClientInterface):
         return response_type in self._VALID_RESPONSE_TYPES
 
     def get_default_redirect_uri(self):
-        ac = self._get_audience_client()
+        ac = self.get_audience_client()
         if not ac:
             return None
         return ac.get_default_redirect_uri()

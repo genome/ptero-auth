@@ -73,6 +73,7 @@ class Backend(object):
         for af in set(client_data.get('audience_fields', [])):
             af_obj = models.AudienceField(client=client, value=af)
 
+        # XXX if 'audience_for' is specified, you must specify a public key
         if 'public_key' in client_data:
             enc_key = models.EncryptionKey(client=client,
                     kid=client_data['public_key']['kid'],
