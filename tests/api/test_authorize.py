@@ -1,4 +1,5 @@
 from .base import BaseFlaskTest
+import jot
 import json
 import urllib
 import urlparse
@@ -140,6 +141,22 @@ class GetAuthorizeImplicitFlow(GetAuthorizeBase):
         self.assertIn('access_token', fragment_data)
         self.assertIn('expires_in', fragment_data)
         self.assertEqual(['Bearer'], fragment_data['token_type'])
+
+    def test_should_return_valid_id_token(self):
+        response = self.client.get(self.public_authorize_url(
+            scopes=['openid', 'bar']),
+            headers={'Authorization': 'API-Key ' + self.bob_key})
+
+        fragment_data = self._get_frament_data(response)
+
+        self.assertIn('id_token', fragment_data)
+        id_token_jws = jot.deserialize(fragment_data['id_token'][0])
+        self.assertTrue(id_token_jws.verify_with(self.public_key))
+
+        id_token = id_token_jws.payload
+        self.assertTrue(id_token.is_valid)
+        self.assertTrue(id_token.has_audience(
+            self.confidential_client_data['client_id']))
 
     def test_should_error_with_three_scopes(self):
         response = self.client.get(self.public_authorize_url(
