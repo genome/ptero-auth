@@ -5,6 +5,7 @@ import jot
 import jot.codec
 import datetime
 import time
+import uuid
 
 
 _AT_HASH_ALGORITHMS = {
@@ -14,10 +15,14 @@ _AT_HASH_ALGORITHMS = {
 
 
 class OIDCTokenHandler(BearerToken):
-    def __init__(self, request_validator, db_session, signature_alg='HS256',
-            signature_key=None, signature_kid=None, *args, **kwargs):
+    def __init__(self, request_validator, db_session, user_info_provider,
+            signature_alg='HS256', signature_key=None, signature_kid=None,
+            namespace=uuid.UUID('66deca4c-4e8a-44ce-a617-3d37bc0bcfaa'),
+            *args, **kwargs):
         BearerToken.__init__(self, request_validator, *args, **kwargs)
         self.db_session = db_session
+        self.user_info_provider = user_info_provider
+        self.namespace = namespace
         self.signature_alg = signature_alg
         self.signature_key = signature_key
         self.signature_kid = signature_kid
@@ -38,8 +43,11 @@ class OIDCTokenHandler(BearerToken):
             'exp': exp,
             'iat': iat,
             'at_hash': self._at_hash(bearer_token['access_token']),
-#            'user_details': request.user.details
         })
+
+        claim_data = self._get_claim_data(request.user, audiences)
+        for claim_name, data in claim_data.iteritems():
+            id_token.set_claim_in_namespace(self.namespace, claim_name, data)
 
         jws = id_token.sign_with(self.signature_key, alg=self.signature_alg,
                 kid=self.signature_kid)
@@ -79,3 +87,10 @@ class OIDCTokenHandler(BearerToken):
         s_obj = self.db_session.query(models.Scope
                 ).filter_by(value=scope).first()
         return s_obj.audience
+
+    def _get_claim_data(self, user, audiences):
+        claim_names = set()
+        for a in audiences:
+            for af in a.audience_fields:
+                claim_names.add(str(af.value))
+        return self.user_info_provider.get_user_data(user, claim_names)

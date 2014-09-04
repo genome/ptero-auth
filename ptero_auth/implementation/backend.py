@@ -6,7 +6,8 @@ import sqlalchemy.exc
 class Backend(object):
     def __init__(self, session, signature_key, user_info_provider, admin_role):
         self.session = session
-        self.oidc_server = create_server(session, signature_key)
+        self.oidc_server = create_server(session, user_info_provider,
+                signature_key)
         self.user_info_provider = user_info_provider
         self.admin_role = admin_role
 

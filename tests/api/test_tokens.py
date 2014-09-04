@@ -3,6 +3,10 @@ import jot
 import json
 import urllib
 import urlparse
+import uuid
+
+
+NAMESPACE = uuid.UUID('66deca4c-4e8a-44ce-a617-3d37bc0bcfaa')
 
 
 class PostTokens(BaseFlaskTest):
@@ -16,6 +20,7 @@ class PostTokens(BaseFlaskTest):
             'allowed_scopes': ['foo', 'bar', 'baz', 'openid'],
             'default_scopes': ['bar', 'baz', 'openid'],
             'audience_for': 'bar',
+            'audience_fields': ['posix'],
         },
 
         {
@@ -27,6 +32,7 @@ class PostTokens(BaseFlaskTest):
             'allowed_scopes': ['baz', 'openid'],
             'default_scopes': ['baz', 'openid'],
             'audience_for': 'baz',
+            'audience_fields': ['roles'],
         },
     ]
 
@@ -139,9 +145,12 @@ class PostTokens(BaseFlaskTest):
         self.assertTrue(id_token.has_audience(
             self.valid_client_data[0]['client_id']))
 
+        self.assertTrue(id_token.get_claim_from_namespace(NAMESPACE, 'posix'))
+        self.assertTrue(id_token.get_claim_from_namespace(NAMESPACE, 'roles'))
+
     def test_should_return_multiple_audiences(self):
         response = self.client.post('/v1/tokens',
-                data=self.get_post_data(scopes=['bar', 'baz', 'openid']),
+                data=self.get_post_data(),
                 headers={
                     'Authorization': self.basic_auth_header(self.client_id,
                         self.client_secret),
@@ -156,6 +165,9 @@ class PostTokens(BaseFlaskTest):
             self.valid_client_data[0]['client_id']))
         self.assertTrue(id_token.has_audience(
             self.valid_client_data[1]['client_id']))
+
+        self.assertTrue(id_token.get_claim_from_namespace(NAMESPACE, 'posix'))
+        self.assertTrue(id_token.get_claim_from_namespace(NAMESPACE, 'roles'))
 
     def test_should_return_401_with_invalid_redirect_uri(self):
         post_data = urllib.urlencode({
