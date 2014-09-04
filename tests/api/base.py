@@ -1,4 +1,3 @@
-from Crypto.PublicKey import RSA
 from ptero_auth.api.application import create_app
 from .. import rsa_key, util
 import json
@@ -10,7 +9,7 @@ import yaml
 
 _SIGNATURE_KEY = {
     'signature_alg': 'RS256',
-    'signature_key': RSA.importKey(rsa_key.TESTING_PRIVATE_KEY),
+    'signature_key': rsa_key.AUTH_PRIVATE_KEY,
     'signature_kid': 'testing-key',
 }
 
@@ -32,7 +31,7 @@ class BaseFlaskTest(unittest.TestCase):
         self.app.config['TESTING'] = True
         self.client = self.app.test_client()
 
-        self.public_key = _SIGNATURE_KEY['signature_key'].publickey()
+        self.public_key = rsa_key.AUTH_PUBLIC_KEY
 
     def basic_auth_header(self, username, password):
         return requests.auth._basic_auth_str(username, password)

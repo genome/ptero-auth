@@ -9,7 +9,7 @@ class SettingsTest (unittest.TestCase):
         'DATABASE_URL': 'foo1',
         'AUTH_URL': 'http://localhost:8000/',
         'ADMIN_ROLE': 'foo2',
-        'SIGNATURE_KEY': rsa_key.TESTING_PRIVATE_KEY,
+        'SIGNATURE_KEY': rsa_key.AUTH_PRIVATE_KEY.exportKey(),
     }
 
     def setUp(self):
