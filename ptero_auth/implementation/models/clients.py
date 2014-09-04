@@ -25,6 +25,7 @@ class ClientInterface(object):
     def get_default_redirect_uri(self):  # pragma: no cover
         return NotImplemented
 
+
 class ConfidentialClient(Base, ClientInterface):
     __tablename__ = 'confidential_client'
 
