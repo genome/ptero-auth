@@ -20,7 +20,7 @@ class PostTokens(BaseFlaskTest):
             'allowed_scopes': ['foo', 'bar', 'baz', 'openid'],
             'default_scopes': ['bar', 'baz', 'openid'],
             'audience_for': 'bar',
-            'audience_fields': ['posix'],
+            'audience_claims': ['posix'],
         },
 
         {
@@ -32,7 +32,7 @@ class PostTokens(BaseFlaskTest):
             'allowed_scopes': ['baz', 'openid'],
             'default_scopes': ['baz', 'openid'],
             'audience_for': 'baz',
-            'audience_fields': ['roles'],
+            'audience_claims': ['roles'],
         },
     ]
 

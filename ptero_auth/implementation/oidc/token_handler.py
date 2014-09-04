@@ -92,6 +92,6 @@ class OIDCTokenHandler(BearerToken):
     def _get_claim_data(self, user, audiences):
         claim_names = set()
         for a in audiences:
-            for af in a.audience_fields:
+            for af in a.audience_claims:
                 claim_names.add(str(af.value))
         return self.user_info_provider.get_user_data(user, claim_names)

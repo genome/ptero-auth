@@ -69,9 +69,9 @@ class Backend(object):
                 audience_for=scope_dict.get(client_data.get('audience_for')),
         )
 
-        # XXX shouldn't be able to specify audience_fields without audience_for
-        for af in set(client_data.get('audience_fields', [])):
-            af_obj = models.AudienceField(client=client, value=af)
+        # XXX shouldn't be able to specify audience_claims without audience_for
+        for af in set(client_data.get('audience_claims', [])):
+            af_obj = models.AudienceClaim(client=client, value=af)
 
         # XXX if 'audience_for' is specified, you must specify a public key
         if 'public_key' in client_data:

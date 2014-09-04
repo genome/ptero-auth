@@ -19,7 +19,7 @@ class PostClientsList(BaseFlaskTest):
         'allowed_scopes': ['foo', 'bar', 'baz'],
         'default_scopes': ['bar', 'baz'],
         'audience_for': 'bar',
-        'audience_fields': ['posix'],
+        'audience_claims': ['posix'],
         'public_key': {
             'kid': 'SOME FANCY KID',
             'key': rsa_key.RESOURCE_PUBLIC_KEY.exportKey(),
@@ -107,7 +107,7 @@ class PostClientsList(BaseFlaskTest):
         'allowed_scopes': set,
         'default_scopes': set,
         'audience_for': lambda x: x,
-        'audience_fields': set,
+        'audience_claims': set,
         'public_key': lambda x: x
     }
     def compare_client_data(self, actual, expected):

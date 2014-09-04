@@ -12,7 +12,7 @@ import time
 
 
 __all__ = [
-    'AudienceField',
+    'AudienceClaim',
     'ConfidentialClient',
     'EncryptionKey',
     'PublicClient',
@@ -94,9 +94,9 @@ class ConfidentialClient(Base, ClientInterface):
 
         if self.audience_for:
             result['audience_for'] = self.audience_for.value
-            if self.audience_fields:
-                result['audience_fields'] = [af.value
-                        for af in self.audience_fields]
+            if self.audience_claims:
+                result['audience_claims'] = [af.value
+                        for af in self.audience_claims]
 
         if self.public_key:
             result['public_key'] = self.public_key.as_dict
@@ -124,15 +124,15 @@ class ConfidentialClient(Base, ClientInterface):
         return self.default_redirect_uri
 
 
-class AudienceField(Base):
-    __tablename__ = 'audience_field'
+class AudienceClaim(Base):
+    __tablename__ = 'audience_claim'
 
-    audience_field_pk = Column(Integer, primary_key=True)
+    audience_claim_pk = Column(Integer, primary_key=True)
     client_pk = Column(Integer, ForeignKey('confidential_client.client_pk'),
             nullable=False)
     value = Column(Enum('posix', 'roles'), nullable=False)
 
-    client = relationship(ConfidentialClient, backref='audience_fields')
+    client = relationship(ConfidentialClient, backref='audience_claims')
 
     __table_args__ = (
         UniqueConstraint('client_pk', 'value', name='_c_af_unique'),
