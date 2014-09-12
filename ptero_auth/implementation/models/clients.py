@@ -130,7 +130,7 @@ class AudienceClaim(Base):
     audience_claim_pk = Column(Integer, primary_key=True)
     client_pk = Column(Integer, ForeignKey('confidential_client.client_pk'),
             nullable=False)
-    value = Column(Enum('posix', 'roles'), nullable=False)
+    value = Column(Enum('posix', 'roles', name='claim_enum'), nullable=False)
 
     client = relationship(ConfidentialClient, backref='audience_claims')
 
@@ -150,8 +150,9 @@ class EncryptionKey(Base):
 
     kid = Column(Text, nullable=False, unique=True)
     key = Column(Text, nullable=False)
-    alg = Column(Enum('RSA1_5'), nullable=False)
-    enc = Column(Enum('A128CBC-HS256'), nullable=False)
+    alg = Column(Enum('RSA1_5', name='encryption_alg_enum'), nullable=False)
+    enc = Column(Enum('A128CBC-HS256', name='encrryption_enc_enum'),
+            nullable=False)
 
     @property
     def as_dict(self):
